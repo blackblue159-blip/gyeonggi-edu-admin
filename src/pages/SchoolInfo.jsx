@@ -6,6 +6,7 @@ import {
 } from "../lib/neis/client.js";
 
 const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
+const LAST_SCHOOL_LS_KEY = "schoolInfo:lastSchool:v1";
 
 function pad2(n) {
   return String(n).padStart(2, "0");
@@ -38,6 +39,7 @@ export default function SchoolInfo() {
   const [results, setResults] = useState([]);
   /** @type {[{ atpt: string, sd: string, name: string, address: string }] | null} */
   const [school, setSchool] = useState(null);
+  const [lastSchoolName, setLastSchoolName] = useState("");
 
   const [month, setMonth] = useState(() => ymFromDate(new Date()));
   const [selectedDate, setSelectedDate] = useState(() => toYmd(new Date()));
@@ -89,6 +91,50 @@ export default function SchoolInfo() {
       setSearching(false);
     }
   }, [query]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(LAST_SCHOOL_LS_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (
+        parsed &&
+        typeof parsed === "object" &&
+        typeof parsed.atpt === "string" &&
+        typeof parsed.sd === "string" &&
+        typeof parsed.name === "string"
+      ) {
+        const restored = {
+          atpt: parsed.atpt,
+          sd: parsed.sd,
+          name: parsed.name,
+          address: typeof parsed.address === "string" ? parsed.address : "",
+        };
+        setSchool(restored);
+        setLastSchoolName(restored.name);
+      }
+    } catch {
+      // ignore broken localStorage JSON
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!school) return;
+    setLastSchoolName(school.name || "");
+    try {
+      localStorage.setItem(
+        LAST_SCHOOL_LS_KEY,
+        JSON.stringify({
+          atpt: school.atpt,
+          sd: school.sd,
+          name: school.name,
+          address: school.address || "",
+        })
+      );
+    } catch {
+      // ignore storage quota / disabled
+    }
+  }, [school]);
 
   useEffect(() => {
     if (!school) {
@@ -150,6 +196,11 @@ export default function SchoolInfo() {
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 sm:py-12">
       <h1 className="text-2xl font-semibold tracking-tight text-[#37352f]">학교 정보 조회</h1>
+      {lastSchoolName ? (
+        <p className="mt-2 text-[13px] text-[#787774]">
+          마지막으로 본 학교: <span className="font-medium text-[#37352f]">{lastSchoolName}</span>
+        </p>
+      ) : null}
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#787774]">
         학교를 검색한 뒤 이번 달 학사일정을 달력에서 확인하고, 날짜를 누르면 그날의{" "}
         <span className="font-medium text-[#37352f]">중식</span> 급식을 볼 수 있습니다.
