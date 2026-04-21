@@ -258,16 +258,41 @@ export default function Inventory() {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array" });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+      // 업로드 포맷: 1행 제목, 2행 단위, 3행 헤더, 4행부터 데이터
+      // => range=2 (0-based) 부터 읽으면 3행을 헤더로 사용할 수 있습니다.
+      const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, range: 2, defval: "" });
+      const headers = Array.isArray(aoa) ? aoa[0] : null;
+      const dataRows = Array.isArray(aoa) ? aoa.slice(1) : [];
+
+      if (!Array.isArray(headers) || headers.filter((x) => String(x || "").trim()).length < 2) {
+        throw new Error("엑셀 헤더(3번째 행)를 읽을 수 없습니다. 파일 형식을 확인해 주세요.");
+      }
+
+      const rows = dataRows
+        .filter((r) => Array.isArray(r) && r.some((x) => String(x ?? "").trim() !== ""))
+        .map((r) => Object.fromEntries(headers.map((h, i) => [String(h || "").trim(), r[i] ?? ""])));
 
       const next = rows.map((r, i) => {
-        const name = pick(r, ["물품명", "품명", "자산명", "물품명칭"]);
+        const name = pick(r, [
+          "물품명",
+          "품명",
+          "자산명",
+          "물품명칭",
+          "G2B목록명",
+        ]);
         const assetNo = pick(r, ["물품고유번호", "고유번호", "자산번호", "관리번호", "자산고유번호"]);
         const location = pick(r, ["설치장소", "설치위치", "사용장소", "장소"]);
         const dept = pick(r, ["운용부서", "사용부서", "관리부서", "부서", "소관부서"]);
         const acqDate = pick(r, ["취득일자", "취득일", "구입일", "구매일"]);
-        const acqPrice = pick(r, ["취득가격", "취득금액", "취득가액", "취득원가", "취득가"]);
-        const lifeYears = pick(r, ["내용연수", "내용연한", "내용연한수", "내용년수"]);
+        const acqPrice = pick(r, [
+          "취득가격",
+          "취득금액",
+          "최초취득금액",
+          "취득가액",
+          "취득원가",
+          "취득가",
+        ]);
+        const lifeYears = pick(r, ["내용연수", "내용연수취득", "내용연수변경", "내용연한", "내용연한수", "내용년수"]);
         const usedYears = pick(r, ["사용연수", "경과연수", "사용년수"]);
 
         return {
