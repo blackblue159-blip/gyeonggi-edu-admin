@@ -107,6 +107,15 @@ export default function Home() {
             cta="바로 가기"
           />
           <ToolCard
+            icon="🧮"
+            title="계산기"
+            description="경제적 수리한계 등 자주 쓰는 계산을 빠르게 처리합니다."
+            badges={["경제적 수리한계", "천단위 콤마", "간편 입력"]}
+            status="사용가능"
+            to="/calculator"
+            cta="바로 가기"
+          />
+          <ToolCard
             icon="💳"
             title="카드 고지서 매칭"
             description="에듀파인 원인행위 목록과 카드 청구 내역을 대조합니다. 엑셀·CSV는 브라우저 안에서만 처리되며 서버로 전송되지 않습니다."
