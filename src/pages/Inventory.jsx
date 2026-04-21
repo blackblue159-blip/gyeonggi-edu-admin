@@ -174,6 +174,7 @@ export default function Inventory() {
   const [items, setItems] = useState([]);
   const [loadErr, setLoadErr] = useState("");
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState(() => ({ 초과: true, 임박: true, 여유: true }));
   const [selected, setSelected] = useState(null);
   const fileRef = useRef(null);
 
@@ -210,7 +211,7 @@ export default function Inventory() {
     });
   }, [items, today]);
 
-  const filtered = useMemo(() => {
+  const searchFiltered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return enriched;
     return enriched.filter((it) => {
@@ -229,11 +230,22 @@ export default function Inventory() {
 
   const statusCounts = useMemo(() => {
     const out = { 초과: 0, 임박: 0, 여유: 0, 미분류: 0 };
-    for (const it of filtered) {
+    for (const it of searchFiltered) {
       out[it._status] = (out[it._status] || 0) + 1;
     }
     return out;
-  }, [filtered]);
+  }, [searchFiltered]);
+
+  const filtered = useMemo(() => {
+    const allOn = statusFilter.초과 && statusFilter.임박 && statusFilter.여유;
+    if (allOn) return searchFiltered;
+    const allow = new Set(
+      Object.entries(statusFilter)
+        .filter(([, v]) => v)
+        .map(([k]) => k)
+    );
+    return searchFiltered.filter((it) => allow.has(it._status));
+  }, [searchFiltered, statusFilter]);
 
   async function handleFile(file) {
     setLoadErr("");
@@ -324,14 +336,8 @@ export default function Inventory() {
     }
   }
 
-  async function exportList(kind) {
-    const base = filtered;
-    const list =
-      kind === "초과"
-        ? base.filter((x) => x._status === "초과")
-        : kind === "임박"
-          ? base.filter((x) => x._status === "임박")
-          : base;
+  async function exportCurrentList() {
+    const list = filtered;
 
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("물품대장");
@@ -373,49 +379,8 @@ export default function Inventory() {
     ws.getColumn("limit").numFmt = "#,##0";
 
     const data = await wb.xlsx.writeBuffer();
-    const filename =
-      kind === "초과"
-        ? "물품대장_내용연수초과.xlsx"
-        : kind === "임박"
-          ? "물품대장_임박.xlsx"
-          : "물품대장_전체.xlsx";
-    downloadBlob(filename, new Blob([data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
-  }
-
-  async function exportDisposalTargets() {
-    const list = filtered.filter((x) => x._status === "초과");
-    const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet("불용처분대상");
-    ws.columns = [
-      { header: "물품명", key: "name", width: 28 },
-      { header: "물품고유번호", key: "assetNo", width: 18 },
-      { header: "취득일자", key: "acqDate", width: 12 },
-      { header: "취득금액", key: "price", width: 14 },
-      { header: "내용연수", key: "life", width: 10 },
-      { header: "사용연수", key: "used", width: 10 },
-      { header: "수리한계금액", key: "limit", width: 16 },
-    ];
-    ws.getRow(1).font = { bold: true };
-    ws.views = [{ state: "frozen", ySplit: 1 }];
-
-    for (const it of list) {
-      ws.addRow({
-        name: it.name || "",
-        assetNo: it.assetNo || "",
-        acqDate: it._acqDate ? formatYmd(it._acqDate) : String(it.acqDate || "").trim(),
-        price: Number.isFinite(it._price) ? Math.round(it._price) : "",
-        life: Number.isFinite(it._lifeYears) ? it._lifeYears : "",
-        used: Number.isFinite(it._usedYears) ? it._usedYears : "",
-        limit: it._repair && Number.isFinite(it._repair.value) ? Math.round(it._repair.value) : "",
-      });
-    }
-
-    ws.getColumn("price").numFmt = "#,##0";
-    ws.getColumn("limit").numFmt = "#,##0";
-
-    const data = await wb.xlsx.writeBuffer();
     downloadBlob(
-      "불용처분_대상목록.xlsx",
+      "물품대장_현재목록.xlsx",
       new Blob([data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
     );
   }
@@ -467,10 +432,7 @@ export default function Inventory() {
           <div className="flex flex-col gap-2">
             <p className="text-[13px] font-medium text-[#37352f]">내보내기</p>
             <div className="flex flex-wrap gap-2">
-              <ExportButton label="전체 내보내기" onClick={() => exportList("전체")} />
-              <ExportButton label="내용연수 초과만" onClick={() => exportList("초과")} />
-              <ExportButton label="임박만" onClick={() => exportList("임박")} />
-              <ExportButton label="불용처분 대상 목록 다운로드" onClick={exportDisposalTargets} />
+              <ExportButton label="현재 목록 내보내기" onClick={exportCurrentList} />
             </div>
           </div>
         </div>
@@ -481,18 +443,39 @@ export default function Inventory() {
               <p className="text-[12px] font-semibold text-[#787774]">전체</p>
               <p className="mt-1 text-2xl font-semibold tracking-tight text-[#37352f]">{filtered.length}</p>
             </div>
-            <div className="rounded-lg border border-[#fecaca] bg-[#fef2f2] p-4">
+            <button
+              type="button"
+              onClick={() => {
+                const only = statusFilter.초과 && !statusFilter.임박 && !statusFilter.여유;
+                setStatusFilter(only ? { 초과: true, 임박: true, 여유: true } : { 초과: true, 임박: false, 여유: false });
+              }}
+              className="rounded-lg border border-[#fecaca] bg-[#fef2f2] p-4 text-left transition hover:brightness-[0.98]"
+            >
               <p className="text-[12px] font-semibold text-[#991b1b]">초과</p>
               <p className="mt-1 text-2xl font-semibold tracking-tight text-[#7f1d1d]">{statusCounts.초과}</p>
-            </div>
-            <div className="rounded-lg border border-[#fdba74] bg-[#fff7ed] p-4">
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const only = !statusFilter.초과 && statusFilter.임박 && !statusFilter.여유;
+                setStatusFilter(only ? { 초과: true, 임박: true, 여유: true } : { 초과: false, 임박: true, 여유: false });
+              }}
+              className="rounded-lg border border-[#fdba74] bg-[#fff7ed] p-4 text-left transition hover:brightness-[0.98]"
+            >
               <p className="text-[12px] font-semibold text-[#9a3412]">임박</p>
               <p className="mt-1 text-2xl font-semibold tracking-tight text-[#7c2d12]">{statusCounts.임박}</p>
-            </div>
-            <div className="rounded-lg border border-[#86efac] bg-[#f0fdf4] p-4">
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const only = !statusFilter.초과 && !statusFilter.임박 && statusFilter.여유;
+                setStatusFilter(only ? { 초과: true, 임박: true, 여유: true } : { 초과: false, 임박: false, 여유: true });
+              }}
+              className="rounded-lg border border-[#86efac] bg-[#f0fdf4] p-4 text-left transition hover:brightness-[0.98]"
+            >
               <p className="text-[12px] font-semibold text-[#166534]">여유</p>
               <p className="mt-1 text-2xl font-semibold tracking-tight text-[#14532d]">{statusCounts.여유}</p>
-            </div>
+            </button>
           </div>
 
           <div className="mt-5 rounded-lg border border-[#e9e9e7] bg-[#fbfbfa] p-4">
@@ -509,11 +492,44 @@ export default function Inventory() {
                 className="w-full rounded-md border border-[#e9e9e7] bg-white px-3 py-2 text-[13px] text-[#37352f] placeholder:text-[#9b9a97] focus:border-[#2383e2] focus:outline-none focus:ring-2 focus:ring-[#2383e2]/20 sm:max-w-xs"
               />
             </div>
-            {statusCounts.미분류 ? (
-              <p className="mt-3 text-[11px] text-[#9b9a97]">
-                미분류 {statusCounts.미분류}건 (내용연수/사용연수 정보가 부족한 항목)
-              </p>
-            ) : null}
+
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-[12px] text-[#37352f]">
+              <label className="inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={statusFilter.초과}
+                  onChange={(e) => setStatusFilter((s) => ({ ...s, 초과: e.target.checked }))}
+                />
+                <span className="font-medium">
+                  초과 <span className="text-[#991b1b]">({statusCounts.초과})</span>
+                </span>
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={statusFilter.임박}
+                  onChange={(e) => setStatusFilter((s) => ({ ...s, 임박: e.target.checked }))}
+                />
+                <span className="font-medium">
+                  임박 <span className="text-[#9a3412]">({statusCounts.임박})</span>
+                </span>
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={statusFilter.여유}
+                  onChange={(e) => setStatusFilter((s) => ({ ...s, 여유: e.target.checked }))}
+                />
+                <span className="font-medium">
+                  여유 <span className="text-[#166534]">({statusCounts.여유})</span>
+                </span>
+              </label>
+              {statusCounts.미분류 ? (
+                <span className="text-[#9b9a97]">
+                  미분류 {statusCounts.미분류}건
+                </span>
+              ) : null}
+            </div>
 
             <div className="mt-4 overflow-x-auto rounded-lg border border-[#e9e9e7] bg-white">
               <table className="min-w-[980px] w-full text-left text-[12px]">
