@@ -1,0 +1,5 @@
+# Cloudflare Pages (Wrangler CLI / 대시보드 참고용)
+# 대시보드 설정: Build command = npm run build, Build output directory = dist
+name = "gyeonggi-edu-admin"
+compatibility_date = "2026-04-01"
+pages_build_output_dir = "dist"
