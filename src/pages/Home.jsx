@@ -1,14 +1,34 @@
 import { Link } from "react-router-dom";
 
-function ToolCard({ icon, title, description, badges, to, cta }) {
+/** @param {"준비중" | "사용가능"} status */
+function statusBadgeClass(status) {
+  if (status === "사용가능") {
+    return "border border-[#c7e3d0] bg-[#edf7f0] text-[#0f6b3a]";
+  }
+  return "border border-[#e9e9e7] bg-[#f7f6f3] text-[#787774]";
+}
+
+/**
+ * @param {object} props
+ * @param {string} props.icon
+ * @param {string} props.title
+ * @param {string} props.description
+ * @param {string[]} props.badges
+ * @param {"준비중" | "사용가능"} props.status
+ * @param {string | null} props.to
+ * @param {string} props.cta
+ */
+function ToolCard({ icon, title, description, badges, status, to, cta }) {
   const inner = (
     <>
       <div className="mb-3 flex items-start justify-between gap-3">
         <span className="text-2xl" aria-hidden>
           {icon}
         </span>
-        <span className="rounded-md bg-[#f7f6f3] px-2 py-0.5 text-xs font-medium text-[#787774]">
-          MVP
+        <span
+          className={`rounded-md px-2 py-0.5 text-[11px] font-semibold tracking-wide ${statusBadgeClass(status)}`}
+        >
+          {status}
         </span>
       </div>
       <h2 className="mb-2 text-base font-semibold text-[#37352f]">{title}</h2>
@@ -54,12 +74,12 @@ export default function Home() {
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 sm:px-6 sm:py-14">
       <section className="mb-10">
-        <h1 className="mb-2 text-2xl font-semibold tracking-tight text-[#37352f] sm:text-3xl">
-          반복 업무를 줄이는 작은 도구들
+        <h1 className="mb-3 text-2xl font-semibold tracking-tight text-[#37352f] sm:text-3xl">
+          반복 업무를 줄여주는 도구들을 한곳에 모았습니다
         </h1>
         <p className="max-w-2xl text-sm leading-relaxed text-[#787774] sm:text-[15px]">
-          학사일정·행정 업무에 쓰는 캘린더와 카드 고지서 매칭 등, 현장에서 바로 쓸 수 있는 도구를 한곳에
-          모았습니다.
+          학사일정·행정 업무에 쓸 수 있는 캘린더와 카드 고지서 대조 등, 현장에서 바로 활용할 수 있는 도구를
+          차례로 연결해 갑니다.
         </p>
       </section>
 
@@ -71,25 +91,27 @@ export default function Home() {
           <ToolCard
             icon="🗓"
             title="교육행정직 업무 캘린더"
-            description="NEIS 학사일정 연동, 월간·주간 뷰, 칸반 스타일 업무 관리. 별도 앱 소개·다운로드로 연결 예정입니다."
+            description="NEIS 학사일정 연동, 월간·주간 뷰, 칸반 스타일 업무 관리. 별도 앱 소개·다운로드 연결 예정입니다."
             badges={["NEIS Open API", "월간/주간", "칸반", "학교별 설정"]}
+            status="준비중"
             to={null}
             cta="소개·다운로드 (준비 중)"
           />
           <ToolCard
             icon="💳"
             title="카드 고지서 매칭"
-            description="엑셀·CSV 업로드 후 원인행위와 자동 대조, 결과 엑셀 저장. 서버로 전송되지 않고 브라우저에서만 처리됩니다."
-            badges={["엑셀/CSV", "자동 매칭", "결과 다운로드", "서버 불필요"]}
+            description="에듀파인 원인행위 목록과 카드 청구 내역을 대조합니다. 엑셀·CSV는 브라우저 안에서만 처리되며 서버로 전송되지 않습니다."
+            badges={["엑셀/CSV", "자동 대조", "결과 다운로드", "서버 불필요"]}
+            status="사용가능"
             to="/card-match"
-            cta="웹에서 실행"
+            cta="웹에서 사용하기"
           />
         </div>
       </section>
 
       <section className="mt-10 rounded-lg border border-dashed border-[#e9e9e7] bg-[#fbfbfa] p-4 text-sm text-[#787774]">
         <p className="font-medium text-[#37352f]">최근 업데이트</p>
-        <p className="mt-1">카드 고지서 매칭 도구를 웹(브라우저 전용)으로 이전했습니다.</p>
+        <p className="mt-1">카드 고지서 매칭 웹앱 오픈</p>
       </section>
     </main>
   );

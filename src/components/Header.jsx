@@ -13,7 +13,9 @@ export function Header() {
           <span className="text-lg font-semibold tracking-tight text-[#37352f] group-hover:text-[#2383e2]">
             경기교행 업무도우미
           </span>
-          <span className="text-xs text-[#787774]">경기도 교육행정직 업무 도구 모음</span>
+          <span className="text-xs leading-snug text-[#787774]">
+            경기도 교육행정직 공무원을 위한 실용 업무 도구 모음
+          </span>
         </NavLink>
         <nav className="flex flex-wrap items-center justify-end gap-1 text-xs sm:text-sm" aria-label="주요 메뉴">
           <NavLink to="/" className={navCls} end>
