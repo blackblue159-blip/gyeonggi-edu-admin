@@ -196,6 +196,7 @@ export default function Inventory() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState(() => ({ 초과: true, 임박: true, 여유: true }));
   const [selected, setSelected] = useState(null);
+  const [lastFileName, setLastFileName] = useState("");
   const fileRef = useRef(null);
 
   // 오늘 날짜 기준 자동 계산
@@ -281,6 +282,7 @@ export default function Inventory() {
   async function handleFile(file) {
     setLoadErr("");
     try {
+      setLastFileName(file?.name || "");
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array" });
       const ws = wb.Sheets[wb.SheetNames[0]];
@@ -369,29 +371,64 @@ export default function Inventory() {
 
   async function exportCurrentList() {
     const list = filtered;
+    const counts = list.reduce(
+      (acc, it) => {
+        if (it._status === "초과") acc.초과 += 1;
+        else if (it._status === "임박") acc.임박 += 1;
+        else if (it._status === "여유") acc.여유 += 1;
+        return acc;
+      },
+      { 초과: 0, 임박: 0, 여유: 0 }
+    );
 
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("물품대장");
+    ws.properties.defaultRowHeight = 18;
 
+    // 상단 요약 정보
+    const exportAt = new Date();
+    ws.addRow([`물품대장 내보내기`]);
+    ws.mergeCells(1, 1, 1, 11);
+    ws.getRow(1).height = 26;
+    ws.getCell("A1").font = { bold: true, size: 14, color: { argb: "FF1E3A5F" } };
+
+    ws.addRow(["파일명", lastFileName || "-", "출력일자", formatYmd(exportAt), ""]);
+    ws.addRow(["전체", list.length, "초과", counts.초과, "임박", counts.임박, "여유", counts.여유]);
+    ws.addRow([]);
+
+    // 헤더/데이터 테이블
     ws.columns = [
-      { header: "물품명", key: "name", width: 28 },
-      { header: "물품고유번호", key: "assetNo", width: 18 },
-      { header: "설치장소", key: "location", width: 18 },
-      { header: "운용부서", key: "dept", width: 14 },
-      { header: "취득일자", key: "acqDate", width: 12 },
-      { header: "취득금액", key: "price", width: 14 },
-      { header: "내용연수", key: "life", width: 10 },
-      { header: "사용연수", key: "used", width: 10 },
-      { header: "상태", key: "status", width: 10 },
-      { header: "수리한계금액", key: "limit", width: 16 },
-      { header: "기준", key: "basis", width: 10 },
+      { header: "물품명", key: "name" },
+      { header: "물품고유번호", key: "assetNo" },
+      { header: "설치장소", key: "location" },
+      { header: "운용부서", key: "dept" },
+      { header: "취득일자", key: "acqDate" },
+      { header: "취득금액", key: "price" },
+      { header: "내용연수", key: "life" },
+      { header: "사용연수", key: "used" },
+      { header: "상태", key: "status" },
+      { header: "수리한계금액", key: "limit" },
+      { header: "기준", key: "basis" },
     ];
 
-    ws.getRow(1).font = { bold: true };
-    ws.views = [{ state: "frozen", ySplit: 1 }];
+    const headerRowNumber = ws.lastRow.number;
+    const headerRow = ws.getRow(headerRowNumber);
+    headerRow.height = 22;
+    headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    headerRow.alignment = { vertical: "middle", horizontal: "center" };
+    headerRow.eachCell((cell) => {
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1E3A5F" } };
+    });
+    ws.views = [{ state: "frozen", ySplit: headerRowNumber }];
+
+    const DATA_FILL = {
+      초과: "FFFFF0F0",
+      임박: "FFFFF8E6",
+      여유: "FFF0FFF4",
+    };
 
     for (const it of list) {
-      ws.addRow({
+      const row = ws.addRow({
         name: it.name || "",
         assetNo: it.assetNo || "",
         location: it.location || "",
@@ -399,15 +436,52 @@ export default function Inventory() {
         acqDate: it._acqDate ? formatYmd(it._acqDate) : String(it.acqDate || "").trim(),
         price: Number.isFinite(it._price) ? Math.round(it._price) : "",
         life: Number.isFinite(it._lifeYears) ? it._lifeYears : "",
-        used: Number.isFinite(it._usedYears) ? it._usedYears : "",
+        used: Number.isFinite(it._usedYears) ? `${it._usedYears.toFixed(1)}년` : "",
         status: it._status,
         limit: it._repair && Number.isFinite(it._repair.value) ? Math.round(it._repair.value) : "",
         basis: it._repair?.basis || "",
       });
+      row.height = 18;
+
+      const fill = DATA_FILL[it._status];
+      if (fill) {
+        row.eachCell((cell) => {
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: fill } };
+        });
+      }
+      row.alignment = { vertical: "middle" };
     }
 
     ws.getColumn("price").numFmt = "#,##0";
     ws.getColumn("limit").numFmt = "#,##0";
+
+    // 테두리 + 컬럼 너비 자동 맞춤
+    const tableStart = headerRowNumber;
+    const tableEnd = ws.lastRow.number;
+    const colCount = ws.columns.length;
+
+    for (let r = tableStart; r <= tableEnd; r++) {
+      const row = ws.getRow(r);
+      for (let c = 1; c <= colCount; c++) {
+        const cell = row.getCell(c);
+        cell.border = {
+          top: { style: "thin", color: { argb: "FFE5E7EB" } },
+          left: { style: "thin", color: { argb: "FFE5E7EB" } },
+          bottom: { style: "thin", color: { argb: "FFE5E7EB" } },
+          right: { style: "thin", color: { argb: "FFE5E7EB" } },
+        };
+      }
+    }
+
+    ws.columns.forEach((col) => {
+      let max = String(col.header ?? "").length;
+      col.eachCell({ includeEmpty: true }, (cell) => {
+        const v = cell.value;
+        const s = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
+        max = Math.max(max, s.length);
+      });
+      col.width = Math.min(42, Math.max(10, max + 2));
+    });
 
     const data = await wb.xlsx.writeBuffer();
     downloadBlob(
