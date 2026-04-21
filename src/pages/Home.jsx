@@ -108,8 +108,8 @@ export default function Home() {
           />
           <ToolCard
             icon="🧮"
-            title="계산기"
-            description="경제적 수리한계 등 자주 쓰는 계산을 빠르게 처리합니다."
+            title="경제적 수리한계 계산기"
+            description="취득가격·내용연수·사용연수를 입력해 경제적 수리한계 금액을 계산합니다."
             badges={["경제적 수리한계", "천단위 콤마", "간편 입력"]}
             status="사용가능"
             to="/calculator"
