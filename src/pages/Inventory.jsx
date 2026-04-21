@@ -268,19 +268,37 @@ export default function Inventory() {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array" });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      // 업로드 포맷: 1행 제목, 2행 단위, 3행 헤더, 4행부터 데이터
-      // => range=2 (0-based) 부터 읽으면 3행을 헤더로 사용할 수 있습니다.
-      const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, range: 2, defval: "" });
-      const headers = Array.isArray(aoa) ? aoa[0] : null;
-      const dataRows = Array.isArray(aoa) ? aoa.slice(1) : [];
+      // 파일마다 "제목/단위 행"이 섞여 헤더 위치가 달라질 수 있어, 첫 20행에서 헤더를 자동 탐지합니다.
+      const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, range: 0, defval: "", blankrows: false });
 
-      if (!Array.isArray(headers) || headers.filter((x) => String(x || "").trim()).length < 2) {
-        throw new Error("엑셀 헤더(3번째 행)를 읽을 수 없습니다. 파일 형식을 확인해 주세요.");
+      const wanted = ["물품고유번호", "취득일자", "취득금액", "최초취득금액", "운용부서", "설치장소", "G2B목록명"].map(
+        (x) => normalizeKey(x)
+      );
+
+      /** @type {number} */
+      let headerIdx = -1;
+      for (let i = 0; i < Math.min(20, aoa.length); i++) {
+        const row = aoa[i];
+        if (!Array.isArray(row)) continue;
+        const keys = row.map((x) => normalizeKey(String(x ?? ""))).filter(Boolean);
+        let hit = 0;
+        for (const w of wanted) if (keys.includes(w)) hit += 1;
+        if (hit >= 2) {
+          headerIdx = i;
+          break;
+        }
       }
+
+      if (headerIdx < 0) {
+        throw new Error("엑셀 헤더 행을 찾을 수 없습니다. (예: '물품고유번호', '취득일자' 등이 있는 행)");
+      }
+
+      const headers = aoa[headerIdx].map((h) => String(h ?? "").trim());
+      const dataRows = aoa.slice(headerIdx + 1);
 
       const rows = dataRows
         .filter((r) => Array.isArray(r) && r.some((x) => String(x ?? "").trim() !== ""))
-        .map((r) => Object.fromEntries(headers.map((h, i) => [String(h || "").trim(), r[i] ?? ""])));
+        .map((r) => Object.fromEntries(headers.map((h, i) => [h, r[i] ?? ""])));
 
       const next = rows.map((r, i) => {
         const name = pick(r, [
