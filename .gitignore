@@ -15,6 +15,9 @@ dist-ssr
 .env.*
 !.env.example
 
+# Wrangler 로컬 시크릿 (NEIS 키 등). Git에 올리지 마세요.
+.dev.vars
+
 # Editor
 .vscode/*
 !.vscode/extensions.json

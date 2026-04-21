@@ -151,9 +151,8 @@ export default function SchoolInfo() {
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 sm:py-12">
       <h1 className="text-2xl font-semibold tracking-tight text-[#37352f]">학교 정보 조회</h1>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#787774]">
-        학교를 검색한 뒤 이번 달 학사일정을 달력으로 확인하고, 날짜를 눌러{" "}
-        <span className="font-medium text-[#37352f]">중식</span> 급식을 볼 수 있습니다. (중식 데이터가 없으면「급식 없음」) 데이터는{" "}
-        <span className="font-medium text-[#37352f]">교육부 NEIS Open API</span>에서 가져옵니다.
+        학교를 검색한 뒤 이번 달 학사일정을 달력에서 확인하고, 날짜를 누르면 그날의{" "}
+        <span className="font-medium text-[#37352f]">중식</span> 급식을 볼 수 있습니다.
       </p>
 
       <section className="mt-8 rounded-lg border border-[#e9e9e7] bg-white p-4 shadow-[0_1px_2px_rgba(15,15,15,0.04)] sm:p-5">

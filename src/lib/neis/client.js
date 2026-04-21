@@ -1,9 +1,11 @@
 /**
  * NEIS Open API (교육부).
- * 허브 기본 URL: https://open.neis.go.kr/hub
+ * 허브: https://open.neis.go.kr/hub/{endpoint}
  * 인증키: import.meta.env.VITE_NEIS_API_KEY
- * 브라우저 요청은 Vite/Cloudflare의 `/neis-hub` 프록시로 위 URL에 전달됩니다.
+ *
+ * 브라우저에서 직접 호출합니다. NEIS 응답에 Access-Control-Allow-Origin: * 가 포함되어 CORS 허용됨.
  */
+const NEIS_HUB_BASE = "https://open.neis.go.kr/hub";
 
 /**
  * @param {unknown} data
@@ -62,7 +64,7 @@ export async function neisFetchJson(endpoint, params) {
     ),
   });
 
-  const res = await fetch(`/neis-hub/${endpoint}?${search}`);
+  const res = await fetch(`${NEIS_HUB_BASE}/${endpoint}?${search}`);
   if (!res.ok) {
     throw new Error(`NEIS 요청 실패 (${res.status})`);
   }
