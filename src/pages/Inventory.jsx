@@ -71,6 +71,26 @@ function diffYearsFloor(from, to) {
   return years < 0 ? 0 : years;
 }
 
+function diffYearsDecimal(from, to) {
+  if (!(from instanceof Date) || !(to instanceof Date)) return null;
+  const a = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  const b = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+  const ms = b.getTime() - a.getTime();
+  if (!Number.isFinite(ms)) return null;
+  const days = ms / (1000 * 60 * 60 * 24);
+  const years = Math.max(0, days / 365.25);
+  return Math.round(years * 10) / 10;
+}
+
+function addYears(date, years) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+  if (!Number.isFinite(years) || years <= 0) return null;
+  const y = Math.trunc(years);
+  const d = new Date(date.getTime());
+  d.setFullYear(d.getFullYear() + y);
+  return d;
+}
+
 function economicRepairLimit(price, lifeYears, usedYears) {
   if (!Number.isFinite(price) || !Number.isFinite(lifeYears) || !Number.isFinite(usedYears)) return null;
   if (lifeYears <= 0 || usedYears <= 0) return null;
@@ -178,6 +198,7 @@ export default function Inventory() {
   const [selected, setSelected] = useState(null);
   const fileRef = useRef(null);
 
+  // 오늘 날짜 기준 자동 계산
   const today = useMemo(() => new Date(), []);
 
   const enriched = useMemo(() => {
@@ -190,13 +211,21 @@ export default function Inventory() {
         usedYearsRaw && Number.isFinite(usedYearsRaw)
           ? usedYearsRaw
           : acqDate
-            ? diffYearsFloor(acqDate, today) + 1
+            ? diffYearsDecimal(acqDate, today)
             : null;
       const usedYears = usedYearsComputed === null ? NaN : usedYearsComputed;
       const lifeY = lifeYears === null ? NaN : lifeYears;
       const price = acqPrice === null ? NaN : acqPrice;
       const repair = economicRepairLimit(price, lifeY, usedYears);
       const status = statusFrom(lifeY, usedYears);
+      const expiryDate = acqDate ? addYears(acqDate, lifeY) : null;
+      let expiryTone = "미분류";
+      if (expiryDate && !Number.isNaN(expiryDate.getTime())) {
+        const diffMs = expiryDate.getTime() - today.getTime();
+        if (diffMs < 0) expiryTone = "초과";
+        else if (diffMs <= 365.25 * 24 * 60 * 60 * 1000) expiryTone = "임박";
+        else expiryTone = "여유";
+      }
       return {
         ...it,
         _id: it.id || `${it.assetNo || ""}-${idx}`,
@@ -207,6 +236,8 @@ export default function Inventory() {
         _usedYears: usedYears,
         _status: status,
         _repair: repair,
+        _expiryDate: expiryDate,
+        _expiryTone: expiryTone,
       };
     });
   }, [items, today]);
@@ -535,20 +566,21 @@ export default function Inventory() {
               <table className="min-w-[980px] w-full text-left text-[12px]">
                 <thead className="bg-[#f7f6f3] text-[#787774]">
                   <tr>
+                    <th className="px-4 py-3 font-medium whitespace-nowrap">상태</th>
                     <th className="px-4 py-3 font-medium">물품명</th>
                     <th className="px-4 py-3 font-medium">설치장소</th>
                     <th className="px-4 py-3 font-medium">운용부서</th>
                     <th className="px-4 py-3 font-medium">취득일자</th>
                     <th className="px-4 py-3 font-medium">취득금액</th>
                     <th className="px-4 py-3 font-medium whitespace-nowrap">내용연수</th>
+                    <th className="px-4 py-3 font-medium whitespace-nowrap">내용연수 만료일</th>
                     <th className="px-4 py-3 font-medium whitespace-nowrap">사용연수</th>
-                    <th className="px-4 py-3 font-medium">상태</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-4 py-12 text-center text-[13px] text-[#787774]">
+                      <td colSpan={9} className="px-4 py-12 text-center text-[13px] text-[#787774]">
                         불러온 데이터가 없습니다. 엑셀을 불러오거나 검색어를 지워 보세요.
                       </td>
                     </tr>
@@ -559,15 +591,6 @@ export default function Inventory() {
                         className="cursor-pointer border-t border-[#f1f0ed] transition hover:bg-[#f7fbff]"
                         onClick={() => setSelected(it)}
                       >
-                        <td className="px-4 py-3.5 font-medium text-[#37352f]">{it.name || "-"}</td>
-                        <td className="px-4 py-3.5 text-[#5c5b57] whitespace-nowrap min-w-[9rem]">{it.location || "-"}</td>
-                        <td className="px-4 py-3.5 text-[#5c5b57]">{it.dept || "-"}</td>
-                        <td className="px-4 py-3.5 text-[#5c5b57]">
-                          {it._acqDate ? formatYmd(it._acqDate) : String(it.acqDate || "-")}
-                        </td>
-                        <td className="px-4 py-3.5 text-[#5c5b57]">{Number.isFinite(it._price) ? formatWon(it._price) : "-"}</td>
-                        <td className="px-4 py-3.5 text-[#5c5b57]">{Number.isFinite(it._lifeYears) ? it._lifeYears : "-"}</td>
-                        <td className="px-4 py-3.5 text-[#5c5b57]">{Number.isFinite(it._usedYears) ? it._usedYears : "-"}</td>
                         <td className="px-4 py-3.5">
                           <span
                             className={[
@@ -584,6 +607,33 @@ export default function Inventory() {
                           >
                             {it._status}
                           </span>
+                        </td>
+                        <td className="px-4 py-3.5 font-medium text-[#37352f]">{it.name || "-"}</td>
+                        <td className="px-4 py-3.5 text-[#5c5b57] whitespace-nowrap min-w-[9rem]">{it.location || "-"}</td>
+                        <td className="px-4 py-3.5 text-[#5c5b57]">{it.dept || "-"}</td>
+                        <td className="px-4 py-3.5 text-[#5c5b57]">
+                          {it._acqDate ? formatYmd(it._acqDate) : String(it.acqDate || "-")}
+                        </td>
+                        <td className="px-4 py-3.5 text-[#5c5b57]">{Number.isFinite(it._price) ? formatWon(it._price) : "-"}</td>
+                        <td className="px-4 py-3.5 text-[#5c5b57]">{Number.isFinite(it._lifeYears) ? it._lifeYears : "-"}</td>
+                        <td className="px-4 py-3.5">
+                          <span
+                            className={[
+                              "font-medium",
+                              it._expiryTone === "초과"
+                                ? "text-[#b91c1c]"
+                                : it._expiryTone === "임박"
+                                  ? "text-[#9a3412]"
+                                  : it._expiryTone === "여유"
+                                    ? "text-[#166534]"
+                                    : "text-[#787774]",
+                            ].join(" ")}
+                          >
+                            {it._expiryDate ? formatYmd(it._expiryDate) : "-"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 text-[#5c5b57]">
+                          {Number.isFinite(it._usedYears) ? `${it._usedYears.toFixed(1)}년` : "-"}
                         </td>
                       </tr>
                     ))
