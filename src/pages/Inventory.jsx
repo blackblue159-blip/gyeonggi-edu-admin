@@ -280,6 +280,8 @@ export default function Inventory() {
       for (let i = 0; i < Math.min(20, aoa.length); i++) {
         const row = aoa[i];
         if (!Array.isArray(row)) continue;
+        // 완전 빈 행(모든 셀이 null/undefined/공백)인 경우 헤더 탐지에서 제외
+        if (row.every((x) => String(x ?? "").trim() === "")) continue;
         const keys = row.map((x) => normalizeKey(String(x ?? ""))).filter(Boolean);
         let hit = 0;
         for (const w of wanted) if (keys.includes(w)) hit += 1;
