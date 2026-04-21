@@ -57,7 +57,7 @@ function formatYmd(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return `${y}.${m}.${d}`;
 }
 
 function diffYearsFloor(from, to) {
@@ -524,8 +524,8 @@ export default function Inventory() {
                     <th className="px-4 py-3 font-medium">운용부서</th>
                     <th className="px-4 py-3 font-medium">취득일자</th>
                     <th className="px-4 py-3 font-medium">취득금액</th>
-                    <th className="px-4 py-3 font-medium">내용연수</th>
-                    <th className="px-4 py-3 font-medium">사용연수</th>
+                    <th className="px-4 py-3 font-medium whitespace-nowrap">내용연수</th>
+                    <th className="px-4 py-3 font-medium whitespace-nowrap">사용연수</th>
                     <th className="px-4 py-3 font-medium">상태</th>
                   </tr>
                 </thead>
@@ -556,6 +556,7 @@ export default function Inventory() {
                           <span
                             className={[
                               "inline-flex items-center rounded-lg px-3 py-1 text-[12px] font-semibold",
+                              "whitespace-nowrap",
                               it._status === "초과"
                                 ? "bg-red-600 text-white"
                                 : it._status === "임박"
