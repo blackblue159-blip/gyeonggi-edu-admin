@@ -1,19 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 function parseNonNegativeNumber(v) {
   const s = String(v ?? "").replaceAll(",", "").trim();
@@ -248,20 +235,6 @@ export default function Inventory() {
     return out;
   }, [filtered]);
 
-  const deptSummary = useMemo(() => {
-    /** @type {Map<string, { dept: string, total: number, 초과: number, 임박: number }>} */
-    const map = new Map();
-    for (const it of filtered) {
-      const dept = (it.dept || "미지정").trim() || "미지정";
-      if (!map.has(dept)) map.set(dept, { dept, total: 0, 초과: 0, 임박: 0 });
-      const row = map.get(dept);
-      row.total += 1;
-      if (it._status === "초과") row.초과 += 1;
-      if (it._status === "임박") row.임박 += 1;
-    }
-    return Array.from(map.values()).sort((a, b) => b.total - a.total);
-  }, [filtered]);
-
   async function handleFile(file) {
     setLoadErr("");
     try {
@@ -447,21 +420,11 @@ export default function Inventory() {
     );
   }
 
-  const pieData = useMemo(
-    () => [
-      { name: "초과", value: statusCounts.초과 },
-      { name: "임박", value: statusCounts.임박 },
-      { name: "여유", value: statusCounts.여유 },
-    ],
-    [statusCounts]
-  );
-  const pieColors = ["#ef4444", "#f59e0b", "#22c55e"];
-
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-12">
       <h1 className="text-2xl font-semibold tracking-tight text-[#37352f]">물품대장</h1>
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#787774]">
-        엑셀을 불러와 실시간 검색·요약 차트·내용연수 상태 분류·경제적 수리한계 계산·엑셀 내보내기를 제공합니다.
+        엑셀을 불러와 실시간 검색·내용연수 상태 분류·경제적 수리한계 계산·엑셀 내보내기를 제공합니다.
       </p>
 
       <section className="mt-8 rounded-lg border border-[#e9e9e7] bg-white p-4 shadow-[0_1px_2px_rgba(15,15,15,0.04)] sm:p-5">
@@ -512,14 +475,31 @@ export default function Inventory() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_360px]">
-          <div className="rounded-lg border border-[#e9e9e7] bg-[#fbfbfa] p-4">
+        <div className="mt-6">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg border border-[#e9e9e7] bg-white p-4 shadow-[0_1px_2px_rgba(15,15,15,0.04)]">
+              <p className="text-[12px] font-semibold text-[#787774]">전체</p>
+              <p className="mt-1 text-2xl font-semibold tracking-tight text-[#37352f]">{filtered.length}</p>
+            </div>
+            <div className="rounded-lg border border-[#fecaca] bg-[#fef2f2] p-4">
+              <p className="text-[12px] font-semibold text-[#991b1b]">초과</p>
+              <p className="mt-1 text-2xl font-semibold tracking-tight text-[#7f1d1d]">{statusCounts.초과}</p>
+            </div>
+            <div className="rounded-lg border border-[#fdba74] bg-[#fff7ed] p-4">
+              <p className="text-[12px] font-semibold text-[#9a3412]">임박</p>
+              <p className="mt-1 text-2xl font-semibold tracking-tight text-[#7c2d12]">{statusCounts.임박}</p>
+            </div>
+            <div className="rounded-lg border border-[#86efac] bg-[#f0fdf4] p-4">
+              <p className="text-[12px] font-semibold text-[#166534]">여유</p>
+              <p className="mt-1 text-2xl font-semibold tracking-tight text-[#14532d]">{statusCounts.여유}</p>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-lg border border-[#e9e9e7] bg-[#fbfbfa] p-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[13px] font-semibold text-[#37352f]">검색</p>
-                <p className="mt-0.5 text-[11px] text-[#9b9a97]">
-                  물품명 · 설치장소 · 운용부서 · 물품고유번호
-                </p>
+                <p className="mt-0.5 text-[11px] text-[#9b9a97]">물품명 · 설치장소 · 운용부서 · 물품고유번호</p>
               </div>
               <input
                 type="search"
@@ -529,44 +509,30 @@ export default function Inventory() {
                 className="w-full rounded-md border border-[#e9e9e7] bg-white px-3 py-2 text-[13px] text-[#37352f] placeholder:text-[#9b9a97] focus:border-[#2383e2] focus:outline-none focus:ring-2 focus:ring-[#2383e2]/20 sm:max-w-xs"
               />
             </div>
-
-            <div className="mt-4 flex flex-wrap gap-2 text-[12px]">
-              <span className="rounded-md border border-[#e9e9e7] bg-white px-2 py-1 text-[#5c5b57]">
-                전체 <span className="font-semibold text-[#37352f]">{filtered.length}</span>
-              </span>
-              <span className="rounded-md border border-[#fecaca] bg-[#fef2f2] px-2 py-1 text-[#991b1b]">
-                초과 <span className="font-semibold">{statusCounts.초과}</span>
-              </span>
-              <span className="rounded-md border border-[#fde68a] bg-[#fffbeb] px-2 py-1 text-[#92400e]">
-                임박 <span className="font-semibold">{statusCounts.임박}</span>
-              </span>
-              <span className="rounded-md border border-[#bbf7d0] bg-[#f0fdf4] px-2 py-1 text-[#166534]">
-                여유 <span className="font-semibold">{statusCounts.여유}</span>
-              </span>
-              <span className="rounded-md border border-[#e9e9e7] bg-white px-2 py-1 text-[#787774]">
-                미분류 <span className="font-semibold">{statusCounts.미분류}</span>
-              </span>
-            </div>
+            {statusCounts.미분류 ? (
+              <p className="mt-3 text-[11px] text-[#9b9a97]">
+                미분류 {statusCounts.미분류}건 (내용연수/사용연수 정보가 부족한 항목)
+              </p>
+            ) : null}
 
             <div className="mt-4 overflow-x-auto rounded-lg border border-[#e9e9e7] bg-white">
-              <table className="min-w-[860px] w-full text-left text-[12px]">
+              <table className="min-w-[980px] w-full text-left text-[12px]">
                 <thead className="bg-[#f7f6f3] text-[#787774]">
                   <tr>
-                    <th className="px-3 py-2 font-medium">물품명</th>
-                    <th className="px-3 py-2 font-medium">고유번호</th>
-                    <th className="px-3 py-2 font-medium">설치장소</th>
-                    <th className="px-3 py-2 font-medium">운용부서</th>
-                    <th className="px-3 py-2 font-medium">취득일자</th>
-                    <th className="px-3 py-2 font-medium">취득금액</th>
-                    <th className="px-3 py-2 font-medium">내용연수</th>
-                    <th className="px-3 py-2 font-medium">사용연수</th>
-                    <th className="px-3 py-2 font-medium">상태</th>
+                    <th className="px-4 py-3 font-medium">물품명</th>
+                    <th className="px-4 py-3 font-medium">설치장소</th>
+                    <th className="px-4 py-3 font-medium">운용부서</th>
+                    <th className="px-4 py-3 font-medium">취득일자</th>
+                    <th className="px-4 py-3 font-medium">취득금액</th>
+                    <th className="px-4 py-3 font-medium">내용연수</th>
+                    <th className="px-4 py-3 font-medium">사용연수</th>
+                    <th className="px-4 py-3 font-medium">상태</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-3 py-10 text-center text-[13px] text-[#787774]">
+                      <td colSpan={8} className="px-4 py-12 text-center text-[13px] text-[#787774]">
                         불러온 데이터가 없습니다. 엑셀을 불러오거나 검색어를 지워 보세요.
                       </td>
                     </tr>
@@ -574,28 +540,29 @@ export default function Inventory() {
                     filtered.map((it) => (
                       <tr
                         key={it._id}
-                        className="cursor-pointer border-t border-[#f1f0ed] hover:bg-[#f7fbff]"
+                        className="cursor-pointer border-t border-[#f1f0ed] transition hover:bg-[#f7fbff]"
                         onClick={() => setSelected(it)}
                       >
-                        <td className="px-3 py-2 font-medium text-[#37352f]">{it.name || "-"}</td>
-                        <td className="px-3 py-2 text-[#5c5b57]">{it.assetNo || "-"}</td>
-                        <td className="px-3 py-2 text-[#5c5b57]">{it.location || "-"}</td>
-                        <td className="px-3 py-2 text-[#5c5b57]">{it.dept || "-"}</td>
-                        <td className="px-3 py-2 text-[#5c5b57]">{it._acqDate ? formatYmd(it._acqDate) : String(it.acqDate || "-")}</td>
-                        <td className="px-3 py-2 text-[#5c5b57]">{Number.isFinite(it._price) ? formatWon(it._price) : "-"}</td>
-                        <td className="px-3 py-2 text-[#5c5b57]">{Number.isFinite(it._lifeYears) ? it._lifeYears : "-"}</td>
-                        <td className="px-3 py-2 text-[#5c5b57]">{Number.isFinite(it._usedYears) ? it._usedYears : "-"}</td>
-                        <td className="px-3 py-2">
+                        <td className="px-4 py-3.5 font-medium text-[#37352f]">{it.name || "-"}</td>
+                        <td className="px-4 py-3.5 text-[#5c5b57] whitespace-nowrap min-w-[9rem]">{it.location || "-"}</td>
+                        <td className="px-4 py-3.5 text-[#5c5b57]">{it.dept || "-"}</td>
+                        <td className="px-4 py-3.5 text-[#5c5b57]">
+                          {it._acqDate ? formatYmd(it._acqDate) : String(it.acqDate || "-")}
+                        </td>
+                        <td className="px-4 py-3.5 text-[#5c5b57]">{Number.isFinite(it._price) ? formatWon(it._price) : "-"}</td>
+                        <td className="px-4 py-3.5 text-[#5c5b57]">{Number.isFinite(it._lifeYears) ? it._lifeYears : "-"}</td>
+                        <td className="px-4 py-3.5 text-[#5c5b57]">{Number.isFinite(it._usedYears) ? it._usedYears : "-"}</td>
+                        <td className="px-4 py-3.5">
                           <span
                             className={[
-                              "inline-flex rounded-md border px-2 py-0.5 text-[11px] font-semibold",
+                              "inline-flex items-center rounded-lg px-3 py-1 text-[12px] font-semibold",
                               it._status === "초과"
-                                ? "border-[#fecaca] bg-[#fef2f2] text-[#991b1b]"
+                                ? "bg-red-600 text-white"
                                 : it._status === "임박"
-                                  ? "border-[#fde68a] bg-[#fffbeb] text-[#92400e]"
+                                  ? "bg-orange-500 text-white"
                                   : it._status === "여유"
-                                    ? "border-[#bbf7d0] bg-[#f0fdf4] text-[#166534]"
-                                    : "border-[#e9e9e7] bg-white text-[#787774]",
+                                    ? "bg-green-600 text-white"
+                                    : "bg-[#f7f6f3] text-[#787774] border border-[#e9e9e7]",
                             ].join(" ")}
                           >
                             {it._status}
@@ -606,45 +573,6 @@ export default function Inventory() {
                   )}
                 </tbody>
               </table>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="rounded-lg border border-[#e9e9e7] bg-white p-4">
-              <p className="text-[13px] font-semibold text-[#37352f]">부서별 현황</p>
-              <p className="mt-1 text-[11px] text-[#9b9a97]">전체/초과/임박 수</p>
-              <div className="mt-3 h-56">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={deptSummary} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="dept" tick={{ fontSize: 10 }} interval={0} angle={-20} textAnchor="end" height={50} />
-                    <YAxis tick={{ fontSize: 10 }} />
-                    <Tooltip />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="total" name="전체" fill="#94a3b8" />
-                    <Bar dataKey="초과" name="초과" fill="#ef4444" />
-                    <Bar dataKey="임박" name="임박" fill="#f59e0b" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-[#e9e9e7] bg-white p-4">
-              <p className="text-[13px] font-semibold text-[#37352f]">내용연수 상태</p>
-              <p className="mt-1 text-[11px] text-[#9b9a97]">초과/임박/여유</p>
-              <div className="mt-3 h-56">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Tooltip />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={75} innerRadius={40} paddingAngle={2}>
-                      {pieData.map((_, i) => (
-                        <Cell key={i} fill={pieColors[i]} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
             </div>
           </div>
         </div>
