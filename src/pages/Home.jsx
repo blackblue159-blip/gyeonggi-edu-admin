@@ -87,7 +87,7 @@ export default function Home() {
         <h2 id="tools-heading" className="sr-only">
           도구 목록
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <ToolCard
             icon="🗓"
             title="교육행정직 업무 캘린더"
@@ -96,6 +96,15 @@ export default function Home() {
             status="준비중"
             to={null}
             cta="소개·다운로드 (준비 중)"
+          />
+          <ToolCard
+            icon="🏫"
+            title="학교 정보 조회"
+            description="학교를 검색해 이번 달 학사일정을 달력으로 보고, 날짜를 눌러 중식 급식을 확인합니다. (NEIS Open API)"
+            badges={["학교 검색", "학사일정", "급식", "NEIS"]}
+            status="사용가능"
+            to="/school-info"
+            cta="바로 가기"
           />
           <ToolCard
             icon="💳"

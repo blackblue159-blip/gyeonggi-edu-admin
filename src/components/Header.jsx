@@ -22,6 +22,9 @@ export function Header() {
             홈
           </NavLink>
           <span className="px-2.5 py-1 text-[#787774]">업무 캘린더</span>
+          <NavLink to="/school-info" className={navCls}>
+            학교 정보
+          </NavLink>
           <NavLink to="/card-match" className={navCls}>
             카드 고지서 매칭
           </NavLink>
