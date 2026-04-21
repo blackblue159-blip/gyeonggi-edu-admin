@@ -34,6 +34,15 @@ function parseDate(value) {
   const s = String(value).trim();
   if (!s) return null;
 
+  // YYYYMMDD (예: 20150424)
+  if (/^\d{8}$/.test(s)) {
+    const y = Number(s.slice(0, 4));
+    const mo = Number(s.slice(4, 6));
+    const d = Number(s.slice(6, 8));
+    const dt = new Date(y, mo - 1, d);
+    if (!Number.isNaN(dt.getTime())) return dt;
+  }
+
   // YYYY-MM-DD, YYYY.MM.DD, YYYY/MM/DD
   const m = s.match(/^(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})$/);
   if (m) {
@@ -103,9 +112,10 @@ function normalizeKey(s) {
 }
 
 function pick(row, candidates) {
+  const cand = candidates.map((c) => normalizeKey(c));
   for (const key of Object.keys(row)) {
     const nk = normalizeKey(key);
-    for (const c of candidates) {
+    for (const c of cand) {
       if (nk === c) return row[key];
     }
   }
@@ -292,7 +302,10 @@ export default function Inventory() {
           "취득원가",
           "취득가",
         ]);
-        const lifeYears = pick(r, ["내용연수", "내용연수취득", "내용연수변경", "내용연한", "내용연한수", "내용년수"]);
+        const lifeYears =
+          pick(r, ["내용연수(변경)", "내용연수변경"]) ??
+          pick(r, ["내용연수(취득)", "내용연수취득"]) ??
+          pick(r, ["내용연수", "내용연한", "내용연한수", "내용년수"]);
         const usedYears = pick(r, ["사용연수", "경과연수", "사용년수"]);
 
         return {
