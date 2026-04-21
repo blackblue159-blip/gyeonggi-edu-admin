@@ -21,10 +21,12 @@ export default function Calculator() {
   const [priceRaw, setPriceRaw] = useState("");
   const [lifeRaw, setLifeRaw] = useState("");
   const [usedRaw, setUsedRaw] = useState("");
+  const [repairCostRaw, setRepairCostRaw] = useState("");
 
   const price = useMemo(() => parseNonNegativeNumber(priceRaw), [priceRaw]);
   const life = useMemo(() => parseNonNegativeNumber(lifeRaw), [lifeRaw]);
   const used = useMemo(() => parseNonNegativeNumber(usedRaw), [usedRaw]);
+  const repairCost = useMemo(() => parseNonNegativeNumber(repairCostRaw), [repairCostRaw]);
 
   const result = useMemo(() => {
     if (price === null || life === null || used === null) return null;
@@ -52,6 +54,59 @@ export default function Calculator() {
     return { value: v, basis: "중간연도", note: null };
   }, [price, life, used]);
 
+  const guidance = useMemo(() => {
+    if (!result || result.error) return null;
+    const usedYears = Number(used);
+    const lifeYears = Number(life);
+    const limit = result.value;
+
+    if (Number.isFinite(usedYears) && Number.isFinite(lifeYears) && usedYears >= lifeYears) {
+      return {
+        tone: "danger",
+        title: "내용연수 초과",
+        message: (
+          <>
+            내용연수가 초과되어 수리비와 관계없이
+            <br />
+            즉시 불용처분이 가능합니다.
+          </>
+        ),
+        limitHint: "참고용",
+      };
+    }
+
+    const rc = repairCost;
+    if (rc !== null && !Number.isNaN(rc) && Number.isFinite(rc)) {
+      if (rc > limit) {
+        return {
+          tone: "danger",
+          title: "수리한계 초과",
+          message: (
+            <>
+              경제적 수리한계를 초과하여
+              <br />
+              불용처분이 가능합니다.
+            </>
+          ),
+          limitHint: null,
+        };
+      }
+    }
+
+    return {
+      tone: "info",
+      title: "수리비 기준",
+      message: (
+        <>
+          수리비가 {formatWon(limit)}원을 초과하면
+          <br />
+          불용처분이 가능합니다.
+        </>
+      ),
+      limitHint: null,
+    };
+  }, [result, used, life, repairCost]);
+
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 sm:py-12">
       <h1 className="text-2xl font-semibold tracking-tight text-[#37352f]">계산기</h1>
@@ -63,11 +118,11 @@ export default function Calculator() {
         <div className="flex flex-col gap-1">
           <h2 className="text-[15px] font-semibold text-[#37352f]">경제적 수리한계 계산기</h2>
           <p className="text-[12px] text-[#787774]">
-            수리비가 경제적 수리한계 금액을 초과하면 불용처분 검토가 가능합니다.
+            수리비 기준을 확인해 불용처분 가능 여부를 판단합니다.
           </p>
         </div>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-3">
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <label className="block">
             <span className="text-[12px] font-medium text-[#5c5b57]">취득가격 (원)</span>
             <input
@@ -98,6 +153,16 @@ export default function Calculator() {
               className="mt-1.5 w-full rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-2 text-[14px] text-[#37352f] placeholder:text-[#9b9a97] focus:border-[#2383e2] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2383e2]/20"
             />
           </label>
+          <label className="block">
+            <span className="text-[12px] font-medium text-[#5c5b57]">수리비 (원)</span>
+            <input
+              inputMode="numeric"
+              value={repairCostRaw}
+              onChange={(e) => setRepairCostRaw(e.target.value)}
+              placeholder="예: 350000"
+              className="mt-1.5 w-full rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-2 text-[14px] text-[#37352f] placeholder:text-[#9b9a97] focus:border-[#2383e2] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2383e2]/20"
+            />
+          </label>
         </div>
 
         <div className="mt-5 rounded-lg border border-[#e9e9e7] bg-[#fbfbfa] p-4">
@@ -114,9 +179,22 @@ export default function Calculator() {
               <p className="text-[12px] text-[#787774]">
                 적용 기준: <span className="font-medium text-[#37352f]">{result.basis}</span>
               </p>
-              <p className="text-[12px] leading-relaxed text-[#787774]">
-                수리비가 위 금액을 초과하면 <span className="font-medium text-[#37352f]">불용처분</span>이 가능할 수 있습니다.
-              </p>
+              {guidance ? (
+                <div
+                  className={[
+                    "rounded-md border px-3 py-2 text-[12px] leading-relaxed",
+                    guidance.tone === "danger"
+                      ? "border-red-200 bg-red-50 text-red-900"
+                      : "border-[#e9e9e7] bg-white text-[#5c5b57]",
+                  ].join(" ")}
+                >
+                  <p className="font-semibold text-[#37352f]">{guidance.title}</p>
+                  <p className="mt-1">{guidance.message}</p>
+                  {guidance.limitHint ? (
+                    <p className="mt-1 text-[#787774]">수리한계 금액은 {guidance.limitHint}입니다.</p>
+                  ) : null}
+                </div>
+              ) : null}
               {result.note ? (
                 <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
                   {result.note}

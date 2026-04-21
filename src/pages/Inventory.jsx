@@ -213,6 +213,7 @@ export default function Inventory() {
   const [lastFileName, setLastFileName] = useState("");
   const [sort, setSort] = useState(() => ({ key: "expiryDate", dir: "asc" }));
   const [page, setPage] = useState(1);
+  const [repairCostRaw, setRepairCostRaw] = useState("");
   const fileRef = useRef(null);
 
   // 오늘 날짜 기준 자동 계산
@@ -365,6 +366,10 @@ export default function Inventory() {
   useEffect(() => {
     setPage(1);
   }, [query, statusFilter, deptFilter, sort.key, sort.dir]);
+
+  useEffect(() => {
+    setRepairCostRaw("");
+  }, [selected?._id]);
 
   async function handleFile(file) {
     setLoadErr("");
@@ -1016,7 +1021,14 @@ export default function Inventory() {
               {selected._repair ? (
                 <div className="mt-3 space-y-2">
                   <div className="flex items-baseline justify-between gap-3">
-                    <p className="text-[12px] text-[#787774]">수리한계 금액</p>
+                    <p className="text-[12px] text-[#787774]">
+                      수리한계 금액
+                      {Number.isFinite(selected._usedYears) &&
+                      Number.isFinite(selected._lifeYears) &&
+                      selected._usedYears >= selected._lifeYears ? (
+                        <span className="ml-1 text-[#9b9a97]">(참고용)</span>
+                      ) : null}
+                    </p>
                     <p className="text-[18px] font-semibold tracking-tight text-[#37352f]">
                       {formatWon(selected._repair.value)}
                     </p>
@@ -1024,9 +1036,55 @@ export default function Inventory() {
                   <p className="text-[12px] text-[#787774]">
                     해당 기준: <span className="font-medium text-[#37352f]">{selected._repair.basis}</span>
                   </p>
-                  <p className="text-[12px] leading-relaxed text-[#787774]">
-                    수리비가 이 금액을 초과하면 <span className="font-medium text-[#37352f]">불용처분</span>이 가능할 수 있습니다.
-                  </p>
+                  <label className="block">
+                    <span className="text-[12px] font-medium text-[#5c5b57]">수리비 (원)</span>
+                    <input
+                      inputMode="numeric"
+                      value={repairCostRaw}
+                      onChange={(e) => setRepairCostRaw(e.target.value)}
+                      placeholder="예: 350000"
+                      className="mt-1.5 w-full rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-2 text-[13px] text-[#37352f] placeholder:text-[#9b9a97] focus:border-[#2383e2] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2383e2]/20"
+                    />
+                  </label>
+
+                  {(() => {
+                    const usedOver =
+                      Number.isFinite(selected._usedYears) &&
+                      Number.isFinite(selected._lifeYears) &&
+                      selected._usedYears >= selected._lifeYears;
+                    const rc = parseNonNegativeNumber(repairCostRaw);
+                    const hasRc = rc !== null && !Number.isNaN(rc) && Number.isFinite(rc);
+
+                    if (usedOver) {
+                      return (
+                        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[12px] leading-relaxed text-red-900">
+                          내용연수가 초과되어 수리비와 관계없이
+                          <br />
+                          즉시 불용처분이 가능합니다.
+                          <br />
+                          <span className="text-[#7f1d1d]">수리한계 금액은 참고용 표시입니다.</span>
+                        </p>
+                      );
+                    }
+
+                    if (hasRc && rc > selected._repair.value) {
+                      return (
+                        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[12px] leading-relaxed text-red-900">
+                          경제적 수리한계를 초과하여
+                          <br />
+                          불용처분이 가능합니다.
+                        </p>
+                      );
+                    }
+
+                    return (
+                      <p className="rounded-md border border-[#e9e9e7] bg-white px-3 py-2 text-[12px] leading-relaxed text-[#5c5b57]">
+                        수리비가 {Math.round(selected._repair.value).toLocaleString("ko-KR")}원을 초과하면
+                        <br />
+                        불용처분이 가능합니다.
+                      </p>
+                    );
+                  })()}
                   {selected._repair.note ? (
                     <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
                       {selected._repair.note}
