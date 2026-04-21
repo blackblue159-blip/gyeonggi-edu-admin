@@ -116,6 +116,15 @@ export default function Home() {
             cta="바로 가기"
           />
           <ToolCard
+            icon="📦"
+            title="물품대장"
+            description="엑셀을 불러와 검색·상태 분류·수리한계 계산·요약 차트·내보내기를 한 번에 처리합니다."
+            badges={["검색", "차트", "엑셀 다운로드", "불용처분 대상"]}
+            status="사용가능"
+            to="/inventory"
+            cta="바로 가기"
+          />
+          <ToolCard
             icon="💳"
             title="카드 고지서 매칭"
             description="에듀파인 원인행위 목록과 카드 청구 내역을 대조합니다. 엑셀·CSV는 브라우저 안에서만 처리되며 서버로 전송되지 않습니다."

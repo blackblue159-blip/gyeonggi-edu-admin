@@ -4,6 +4,7 @@ import Home from "./pages/Home.jsx";
 import CardMatch from "./pages/CardMatch.jsx";
 import SchoolInfo from "./pages/SchoolInfo.jsx";
 import Calculator from "./pages/Calculator.jsx";
+import Inventory from "./pages/Inventory.jsx";
 
 export default function App() {
   return (
@@ -11,6 +12,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
         <Route path="/calculator" element={<Calculator />} />
+        <Route path="/inventory" element={<Inventory />} />
         <Route path="/school-info" element={<SchoolInfo />} />
         <Route path="/card-match" element={<CardMatch />} />
       </Route>

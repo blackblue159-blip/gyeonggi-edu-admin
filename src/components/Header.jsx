@@ -25,6 +25,9 @@ export function Header() {
           <NavLink to="/calculator" className={navCls}>
             계산기
           </NavLink>
+          <NavLink to="/inventory" className={navCls}>
+            물품대장
+          </NavLink>
           <NavLink to="/school-info" className={navCls}>
             학교 정보
           </NavLink>
