@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
 
@@ -159,6 +159,19 @@ function ExportButton({ label, onClick }) {
   );
 }
 
+function SortTh({ label, active, dir, onClick, className = "" }) {
+  return (
+    <th
+      className={`px-4 py-3 font-medium whitespace-nowrap select-none ${className}`}
+    >
+      <button type="button" onClick={onClick} className="inline-flex items-center gap-1 text-[#787774] hover:text-[#37352f]">
+        {label}
+        {active ? <span className="text-[10px]">{dir === "asc" ? "▲" : "▼"}</span> : null}
+      </button>
+    </th>
+  );
+}
+
 function Modal({ open, title, onClose, children }) {
   if (!open) return null;
   return (
@@ -195,8 +208,11 @@ export default function Inventory() {
   const [loadErr, setLoadErr] = useState("");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState(() => ({ 초과: true, 임박: true, 여유: true }));
+  const [deptFilter, setDeptFilter] = useState(() => ({}));
   const [selected, setSelected] = useState(null);
   const [lastFileName, setLastFileName] = useState("");
+  const [sort, setSort] = useState(() => ({ key: "expiryDate", dir: "asc" }));
+  const [page, setPage] = useState(1);
   const fileRef = useRef(null);
 
   // 오늘 날짜 기준 자동 계산
@@ -268,16 +284,83 @@ export default function Inventory() {
     return out;
   }, [searchFiltered]);
 
+  const deptCounts = useMemo(() => {
+    /** @type {Record<string, number>} */
+    const out = {};
+    for (const it of searchFiltered) {
+      const d = (it.dept || "미지정").trim() || "미지정";
+      out[d] = (out[d] || 0) + 1;
+    }
+    return out;
+  }, [searchFiltered]);
+
+  const deptList = useMemo(() => Object.keys(deptCounts).sort((a, b) => a.localeCompare(b, "ko")), [deptCounts]);
+
   const filtered = useMemo(() => {
     const allOn = statusFilter.초과 && statusFilter.임박 && statusFilter.여유;
-    if (allOn) return searchFiltered;
     const allow = new Set(
       Object.entries(statusFilter)
         .filter(([, v]) => v)
         .map(([k]) => k)
     );
-    return searchFiltered.filter((it) => allow.has(it._status));
+    const deptAllOn = Object.keys(deptFilter).length === 0 || Object.values(deptFilter).every(Boolean);
+    const deptAllow = new Set(Object.entries(deptFilter).filter(([, v]) => v).map(([k]) => k));
+
+    return searchFiltered.filter((it) => {
+      const okStatus = allOn ? it._status !== "미분류" ? true : true : allow.has(it._status);
+      if (!okStatus) return false;
+      if (deptAllOn) return true;
+      const d = (it.dept || "미지정").trim() || "미지정";
+      return deptAllow.has(d);
+    });
   }, [searchFiltered, statusFilter]);
+
+  // reset page when filters/search/sort changes
+  // (검색/필터 변경 시 항상 1페이지부터 보기)
+  useMemo(() => null, []);
+
+  const sorted = useMemo(() => {
+    const dir = sort.dir === "desc" ? -1 : 1;
+    const getVal = (it) => {
+      switch (sort.key) {
+        case "status":
+          return it._status || "";
+        case "name":
+          return it.name || "";
+        case "location":
+          return it.location || "";
+        case "dept":
+          return it.dept || "";
+        case "acqDate":
+          return it._acqDate ? it._acqDate.getTime() : Infinity;
+        case "price":
+          return Number.isFinite(it._price) ? it._price : Infinity;
+        case "lifeYears":
+          return Number.isFinite(it._lifeYears) ? it._lifeYears : Infinity;
+        case "usedYears":
+          return Number.isFinite(it._usedYears) ? it._usedYears : Infinity;
+        case "expiryDate":
+        default:
+          return it._expiryDate ? it._expiryDate.getTime() : Infinity;
+      }
+    };
+    return [...filtered].sort((a, b) => {
+      const av = getVal(a);
+      const bv = getVal(b);
+      if (av < bv) return -1 * dir;
+      if (av > bv) return 1 * dir;
+      return String(a._id).localeCompare(String(b._id));
+    });
+  }, [filtered, sort]);
+
+  const pageSize = 100;
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const pageSafe = Math.min(Math.max(1, page), totalPages);
+  const paged = useMemo(() => sorted.slice((pageSafe - 1) * pageSize, pageSafe * pageSize), [sorted, pageSafe]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, statusFilter, deptFilter, sort.key, sort.dir]);
 
   async function handleFile(file) {
     setLoadErr("");
@@ -363,6 +446,11 @@ export default function Inventory() {
       });
 
       setItems(next);
+      // 부서 필터 초기화: 업로드한 부서 전부 체크
+      const depts = Array.from(
+        new Set(next.map((x) => (x.dept || "미지정").trim() || "미지정"))
+      ).sort((a, b) => a.localeCompare(b, "ko"));
+      setDeptFilter(Object.fromEntries(depts.map((d) => [d, true])));
     } catch (e) {
       setLoadErr(e instanceof Error ? e.message : String(e));
       setItems([]);
@@ -370,7 +458,7 @@ export default function Inventory() {
   }
 
   async function exportCurrentList() {
-    const list = filtered;
+    const list = sorted;
     const counts = list.reduce(
       (acc, it) => {
         if (it._status === "초과") acc.초과 += 1;
@@ -598,7 +686,8 @@ export default function Inventory() {
               />
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-3 text-[12px] text-[#37352f]">
+            <div className="mt-4 flex flex-col gap-3 text-[12px] text-[#37352f]">
+              <div className="flex flex-wrap items-center gap-3">
               <label className="inline-flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -634,32 +723,91 @@ export default function Inventory() {
                   미분류 {statusCounts.미분류}건
                 </span>
               ) : null}
+              </div>
+
+              <div className="rounded-lg border border-[#e9e9e7] bg-white p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[12px] font-semibold text-[#37352f]">운용부서 필터</p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDeptFilter((m) => Object.fromEntries(Object.keys(m).map((k) => [k, true])))}
+                      className="rounded-md border border-[#e9e9e7] bg-white px-2 py-1 text-[11px] font-medium text-[#37352f] hover:bg-[#f7f6f3]"
+                    >
+                      전체 선택
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeptFilter((m) => Object.fromEntries(Object.keys(m).map((k) => [k, false])))}
+                      className="rounded-md border border-[#e9e9e7] bg-white px-2 py-1 text-[11px] font-medium text-[#37352f] hover:bg-[#f7f6f3]"
+                    >
+                      전체 해제
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-3 flex max-h-28 flex-wrap gap-2 overflow-auto pr-1">
+                  {deptList.length === 0 ? (
+                    <span className="text-[11px] text-[#9b9a97]">엑셀을 불러오면 부서 목록이 표시됩니다.</span>
+                  ) : (
+                    deptList.map((d) => (
+                      <label key={d} className="inline-flex items-center gap-2 rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-2 py-1">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(deptFilter[d])}
+                          onChange={(e) => setDeptFilter((m) => ({ ...m, [d]: e.target.checked }))}
+                        />
+                        <span className="text-[11px] font-medium text-[#37352f]">
+                          {d} <span className="text-[#787774]">({deptCounts[d] || 0})</span>
+                        </span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="mt-4 overflow-x-auto rounded-lg border border-[#e9e9e7] bg-white">
               <table className="min-w-[980px] w-full text-left text-[12px]">
                 <thead className="bg-[#f7f6f3] text-[#787774]">
                   <tr>
-                    <th className="px-4 py-3 font-medium whitespace-nowrap">상태</th>
-                    <th className="px-4 py-3 font-medium">물품명</th>
-                    <th className="px-4 py-3 font-medium">설치장소</th>
-                    <th className="px-4 py-3 font-medium">운용부서</th>
-                    <th className="px-4 py-3 font-medium">취득일자</th>
-                    <th className="px-4 py-3 font-medium">취득금액</th>
-                    <th className="px-4 py-3 font-medium whitespace-nowrap">내용연수</th>
-                    <th className="px-4 py-3 font-medium whitespace-nowrap">내용연수 만료일</th>
-                    <th className="px-4 py-3 font-medium whitespace-nowrap">사용연수</th>
+                    <SortTh label="상태" active={sort.key === "status"} dir={sort.dir} onClick={() => {
+                      setSort((s) => ({ key: "status", dir: s.key === "status" ? (s.dir === "asc" ? "desc" : "asc") : "asc" }));
+                    }} />
+                    <SortTh label="물품명" active={sort.key === "name"} dir={sort.dir} onClick={() => {
+                      setSort((s) => ({ key: "name", dir: s.key === "name" ? (s.dir === "asc" ? "desc" : "asc") : "asc" }));
+                    }} />
+                    <SortTh label="설치장소" active={sort.key === "location"} dir={sort.dir} onClick={() => {
+                      setSort((s) => ({ key: "location", dir: s.key === "location" ? (s.dir === "asc" ? "desc" : "asc") : "asc" }));
+                    }} />
+                    <SortTh label="운용부서" active={sort.key === "dept"} dir={sort.dir} onClick={() => {
+                      setSort((s) => ({ key: "dept", dir: s.key === "dept" ? (s.dir === "asc" ? "desc" : "asc") : "asc" }));
+                    }} />
+                    <SortTh label="취득일자" active={sort.key === "acqDate"} dir={sort.dir} onClick={() => {
+                      setSort((s) => ({ key: "acqDate", dir: s.key === "acqDate" ? (s.dir === "asc" ? "desc" : "asc") : "asc" }));
+                    }} />
+                    <SortTh label="취득금액" active={sort.key === "price"} dir={sort.dir} onClick={() => {
+                      setSort((s) => ({ key: "price", dir: s.key === "price" ? (s.dir === "asc" ? "desc" : "asc") : "asc" }));
+                    }} />
+                    <SortTh label="내용연수" active={sort.key === "lifeYears"} dir={sort.dir} onClick={() => {
+                      setSort((s) => ({ key: "lifeYears", dir: s.key === "lifeYears" ? (s.dir === "asc" ? "desc" : "asc") : "asc" }));
+                    }} />
+                    <SortTh label="내용연수 만료일" active={sort.key === "expiryDate"} dir={sort.dir} onClick={() => {
+                      setSort((s) => ({ key: "expiryDate", dir: s.key === "expiryDate" ? (s.dir === "asc" ? "desc" : "asc") : "asc" }));
+                    }} />
+                    <SortTh label="사용연수" active={sort.key === "usedYears"} dir={sort.dir} onClick={() => {
+                      setSort((s) => ({ key: "usedYears", dir: s.key === "usedYears" ? (s.dir === "asc" ? "desc" : "asc") : "asc" }));
+                    }} />
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.length === 0 ? (
+                  {sorted.length === 0 ? (
                     <tr>
                       <td colSpan={9} className="px-4 py-12 text-center text-[13px] text-[#787774]">
                         불러온 데이터가 없습니다. 엑셀을 불러오거나 검색어를 지워 보세요.
                       </td>
                     </tr>
                   ) : (
-                    filtered.map((it) => (
+                    paged.map((it) => (
                       <tr
                         key={it._id}
                         className="cursor-pointer border-t border-[#f1f0ed] transition hover:bg-[#f7fbff]"
@@ -714,6 +862,37 @@ export default function Inventory() {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[12px] text-[#5c5b57]">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage(1)}
+                  className="rounded-md border border-[#e9e9e7] bg-white px-2.5 py-1.5 font-medium text-[#37352f] hover:bg-[#f7f6f3]"
+                >
+                  1페이지로 이동
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={pageSafe <= 1}
+                  className="rounded-md border border-[#e9e9e7] bg-white px-2.5 py-1.5 font-medium text-[#37352f] hover:bg-[#f7f6f3] disabled:opacity-50"
+                >
+                  이전
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={pageSafe >= totalPages}
+                  className="rounded-md border border-[#e9e9e7] bg-white px-2.5 py-1.5 font-medium text-[#37352f] hover:bg-[#f7f6f3] disabled:opacity-50"
+                >
+                  다음
+                </button>
+              </div>
+              <div>
+                페이지 <span className="font-semibold text-[#37352f]">{pageSafe}</span> / {totalPages} (총 {sorted.length}건)
+              </div>
             </div>
           </div>
         </div>
@@ -793,6 +972,22 @@ export default function Inventory() {
               ) : (
                 <p className="mt-3 text-[12px] text-[#787774]">취득금액/내용연수/사용연수 값이 있어야 계산됩니다.</p>
               )}
+            </div>
+
+            <div className="sm:col-span-2 rounded-lg border border-[#e9e9e7] bg-white p-4">
+              <p className="text-[12px] font-semibold text-[#37352f]">전체 컬럼</p>
+              <div className="mt-3 max-h-56 overflow-auto rounded-md border border-[#e9e9e7]">
+                <table className="w-full text-left text-[12px]">
+                  <tbody>
+                    {Object.entries(selected._raw || {}).map(([k, v]) => (
+                      <tr key={k} className="border-t border-[#f1f0ed] first:border-0">
+                        <td className="w-[35%] bg-[#fbfbfa] px-3 py-2 font-medium text-[#37352f]">{k}</td>
+                        <td className="px-3 py-2 text-[#5c5b57]">{String(v ?? "")}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         ) : null}
