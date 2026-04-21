@@ -322,9 +322,11 @@ export default function Inventory() {
           "취득원가",
           "취득가",
         ]);
+        const lifeChanged = pick(r, ["내용연수(변경)", "내용연수변경"]);
+        const lifeAcquired = pick(r, ["내용연수(취득)", "내용연수취득"]);
         const lifeYears =
-          pick(r, ["내용연수(변경)", "내용연수변경"]) ??
-          pick(r, ["내용연수(취득)", "내용연수취득"]) ??
+          (String(lifeChanged ?? "").trim() ? lifeChanged : null) ??
+          (String(lifeAcquired ?? "").trim() ? lifeAcquired : null) ??
           pick(r, ["내용연수", "내용연한", "내용연한수", "내용년수"]);
         const usedYears = pick(r, ["사용연수", "경과연수", "사용년수"]);
 
