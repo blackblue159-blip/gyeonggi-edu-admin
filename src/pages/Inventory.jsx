@@ -482,40 +482,61 @@ export default function Inventory() {
     const ws = wb.addWorksheet("물품대장");
     ws.properties.defaultRowHeight = 18;
 
-    // 상단 요약 정보
+    // 1~4행: 상단 요약 정보 (현재 화면과 동일하게)
     const exportAt = new Date();
-    ws.addRow([`물품대장 내보내기`]);
+    ws.addRow(["물품대장 현재목록"]);
     ws.mergeCells(1, 1, 1, 11);
-    ws.getRow(1).height = 26;
-    ws.getCell("A1").font = { bold: true, size: 14, color: { argb: "FF1E3A5F" } };
+    ws.getRow(1).height = 28;
+    ws.getCell("A1").font = { bold: true, size: 16, color: { argb: "FF111827" } };
+    ws.getCell("A1").alignment = { vertical: "middle" };
 
-    ws.addRow(["파일명", lastFileName || "-", "출력일자", formatYmd(exportAt), ""]);
-    ws.addRow(["전체", list.length, "초과", counts.초과, "임박", counts.임박, "여유", counts.여유]);
+    ws.addRow(["파일명", lastFileName || "-", "출력일자", formatYmd(exportAt)]);
+    ws.addRow([
+      `전체 ${list.length}건`,
+      `초과 ${counts.초과}건`,
+      `임박 ${counts.임박}건`,
+      `여유 ${counts.여유}건`,
+    ]);
     ws.addRow([]);
 
-    // 헤더/데이터 테이블
-    ws.columns = [
-      { header: "물품명", key: "name" },
-      { header: "물품고유번호", key: "assetNo" },
-      { header: "설치장소", key: "location" },
-      { header: "운용부서", key: "dept" },
-      { header: "취득일자", key: "acqDate" },
-      { header: "취득금액", key: "price" },
-      { header: "내용연수", key: "life" },
-      { header: "사용연수", key: "used" },
-      { header: "상태", key: "status" },
-      { header: "수리한계금액", key: "limit" },
-      { header: "기준", key: "basis" },
+    // 5행: 헤더
+    const headerFill = "FF1E3A5F";
+    const headerLabels = [
+      "상태",
+      "물품명",
+      "설치장소",
+      "운용부서",
+      "취득일자",
+      "취득금액",
+      "내용연수",
+      "사용연수",
+      "내용연수만료일",
+      "수리한계금액",
+      "기준",
     ];
 
-    const headerRowNumber = ws.lastRow.number;
-    const headerRow = ws.getRow(headerRowNumber);
-    headerRow.height = 22;
+    ws.columns = [
+      { key: "status" },
+      { key: "name" },
+      { key: "location" },
+      { key: "dept" },
+      { key: "acqDate" },
+      { key: "price" },
+      { key: "life" },
+      { key: "used" },
+      { key: "expiryDate" },
+      { key: "limit" },
+      { key: "basis" },
+    ];
+
+    const headerRow = ws.addRow(headerLabels);
+    headerRow.height = 24;
     headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
     headerRow.alignment = { vertical: "middle", horizontal: "center" };
     headerRow.eachCell((cell) => {
-      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1E3A5F" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: headerFill } };
     });
+    const headerRowNumber = headerRow.number;
     ws.views = [{ state: "frozen", ySplit: headerRowNumber }];
 
     const DATA_FILL = {
@@ -523,18 +544,23 @@ export default function Inventory() {
       임박: "FFFFF8E6",
       여유: "FFF0FFF4",
     };
+    const EXPIRY_FONT = {
+      초과: "FFB91C1C",
+      임박: "FF9A3412",
+      여유: "FF166534",
+    };
 
     for (const it of list) {
       const row = ws.addRow({
+        status: it._status,
         name: it.name || "",
-        assetNo: it.assetNo || "",
         location: it.location || "",
         dept: it.dept || "",
         acqDate: it._acqDate ? formatYmd(it._acqDate) : String(it.acqDate || "").trim(),
         price: Number.isFinite(it._price) ? Math.round(it._price) : "",
         life: Number.isFinite(it._lifeYears) ? it._lifeYears : "",
         used: Number.isFinite(it._usedYears) ? `${it._usedYears.toFixed(1)}년` : "",
-        status: it._status,
+        expiryDate: it._expiryDate ? formatYmd(it._expiryDate) : "",
         limit: it._repair && Number.isFinite(it._repair.value) ? Math.round(it._repair.value) : "",
         basis: it._repair?.basis || "",
       });
@@ -547,17 +573,20 @@ export default function Inventory() {
         });
       }
       row.alignment = { vertical: "middle" };
+
+      // 만료일 글자색
+      const expiryCell = row.getCell(9);
+      const f = EXPIRY_FONT[it._expiryTone];
+      if (f) expiryCell.font = { ...(expiryCell.font || {}), color: { argb: f }, bold: true };
     }
 
     ws.getColumn("price").numFmt = "#,##0";
     ws.getColumn("limit").numFmt = "#,##0";
 
     // 테두리 + 컬럼 너비 자동 맞춤
-    const tableStart = headerRowNumber;
     const tableEnd = ws.lastRow.number;
-    const colCount = ws.columns.length;
-
-    for (let r = tableStart; r <= tableEnd; r++) {
+    const colCount = 11;
+    for (let r = 1; r <= tableEnd; r++) {
       const row = ws.getRow(r);
       for (let c = 1; c <= colCount; c++) {
         const cell = row.getCell(c);
