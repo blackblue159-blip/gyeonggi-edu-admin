@@ -297,23 +297,27 @@ export default function Inventory() {
   const deptList = useMemo(() => Object.keys(deptCounts).sort((a, b) => a.localeCompare(b, "ko")), [deptCounts]);
 
   const filtered = useMemo(() => {
-    const allOn = statusFilter.초과 && statusFilter.임박 && statusFilter.여유;
-    const allow = new Set(
+    const allowedStatuses = new Set(
       Object.entries(statusFilter)
         .filter(([, v]) => v)
         .map(([k]) => k)
     );
-    const deptAllOn = Object.keys(deptFilter).length === 0 || Object.values(deptFilter).every(Boolean);
-    const deptAllow = new Set(Object.entries(deptFilter).filter(([, v]) => v).map(([k]) => k));
+
+    const deptKeys = Object.keys(deptFilter);
+    const deptAllowed = new Set(deptKeys.filter((k) => deptFilter[k]));
+    const deptAllOn = deptKeys.length === 0 || deptAllowed.size === deptKeys.length;
 
     return searchFiltered.filter((it) => {
-      const okStatus = allOn ? it._status !== "미분류" ? true : true : allow.has(it._status);
-      if (!okStatus) return false;
+      // 상태 필터(초과/임박/여유)만 대상으로 필터링 (미분류는 항상 제외)
+      if (!allowedStatuses.has(it._status)) return false;
+
+      // 부서 필터
       if (deptAllOn) return true;
+      if (deptAllowed.size === 0) return false;
       const d = (it.dept || "미지정").trim() || "미지정";
-      return deptAllow.has(d);
+      return deptAllowed.has(d);
     });
-  }, [searchFiltered, statusFilter]);
+  }, [searchFiltered, statusFilter, deptFilter]);
 
   // reset page when filters/search/sort changes
   // (검색/필터 변경 시 항상 1페이지부터 보기)
@@ -864,32 +868,92 @@ export default function Inventory() {
               </table>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[12px] text-[#5c5b57]">
-              <div className="flex items-center gap-2">
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-[12px] text-[#5c5b57]">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setPage(1)}
-                  className="rounded-md border border-[#e9e9e7] bg-white px-2.5 py-1.5 font-medium text-[#37352f] hover:bg-[#f7f6f3]"
+                  disabled={pageSafe <= 1}
+                  className="rounded-md border border-[#e9e9e7] bg-white px-2.5 py-1.5 font-medium text-[#37352f] hover:bg-[#f7f6f3] disabled:opacity-50"
+                  aria-label="맨 처음"
                 >
-                  1페이지로 이동
+                  &lt;&lt;
                 </button>
                 <button
                   type="button"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={pageSafe <= 1}
                   className="rounded-md border border-[#e9e9e7] bg-white px-2.5 py-1.5 font-medium text-[#37352f] hover:bg-[#f7f6f3] disabled:opacity-50"
+                  aria-label="이전"
                 >
-                  이전
+                  &lt;
                 </button>
+
+                {(() => {
+                  const windowSize = 5;
+                  const start = Math.max(1, pageSafe - windowSize);
+                  const end = Math.min(totalPages, pageSafe + windowSize);
+                  const nums = [];
+                  const push = (x) => nums.push(x);
+                  const pushEllipsis = (key) => nums.push(key);
+
+                  push(1);
+                  if (start > 2) pushEllipsis("ellipsis-left");
+                  for (let n = Math.max(2, start); n <= Math.min(totalPages - 1, end); n++) push(n);
+                  if (end < totalPages - 1) pushEllipsis("ellipsis-right");
+                  if (totalPages > 1) push(totalPages);
+
+                  return (
+                    <div className="flex flex-wrap items-center gap-1">
+                      {nums.map((n) => {
+                        if (typeof n === "string") {
+                          return (
+                            <span key={n} className="px-1 text-[#9b9a97]">
+                              …
+                            </span>
+                          );
+                        }
+                        const active = n === pageSafe;
+                        return (
+                          <button
+                            key={n}
+                            type="button"
+                            onClick={() => setPage(n)}
+                            className={[
+                              "rounded-md border px-2.5 py-1.5 font-medium",
+                              active
+                                ? "border-[#bfdbfe] bg-[#eff6ff] text-[#1d4ed8]"
+                                : "border-[#e9e9e7] bg-white text-[#37352f] hover:bg-[#f7f6f3]",
+                            ].join(" ")}
+                          >
+                            {n}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+
                 <button
                   type="button"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={pageSafe >= totalPages}
                   className="rounded-md border border-[#e9e9e7] bg-white px-2.5 py-1.5 font-medium text-[#37352f] hover:bg-[#f7f6f3] disabled:opacity-50"
+                  aria-label="다음"
                 >
-                  다음
+                  &gt;
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage(totalPages)}
+                  disabled={pageSafe >= totalPages}
+                  className="rounded-md border border-[#e9e9e7] bg-white px-2.5 py-1.5 font-medium text-[#37352f] hover:bg-[#f7f6f3] disabled:opacity-50"
+                  aria-label="맨 끝"
+                >
+                  &gt;&gt;
                 </button>
               </div>
+
               <div>
                 페이지 <span className="font-semibold text-[#37352f]">{pageSafe}</span> / {totalPages} (총 {sorted.length}건)
               </div>
