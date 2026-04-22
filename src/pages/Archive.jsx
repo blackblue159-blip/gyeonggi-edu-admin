@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { buildExpensePages, ExpenseVoucherDocument } from "../components/ExpenseVoucherOutput.jsx";
+import { BinderSpineGrid } from "../components/ExpenseVoucherOutput.jsx";
 
 const STORAGE_LEDGER = "gyeonggi.archive.ledger.v1";
 const STORAGE_EXPENSE = "gyeonggi.archive.expense.v1";
@@ -43,19 +43,52 @@ function defaultLedgerRow() {
   };
 }
 
-function defaultExpenseRow(index = 1) {
+function defaultExpenseRow() {
   return {
     id: newId(),
-    no: index,
     title: "학교회계지출증빙서",
     fiscalYear: "2024회계",
-    yearLabel: "2024년",
-    monthLabel: "3월",
-    startDate: "",
-    endDate: "",
-    serialLabel: "",
-    orgName: "OO학교",
+    yearMonth: "2024년 3월",
+    period: "~ 11일(553)",
+    serialLabel: "5책중1책",
+    orgName: "은가람중학교",
     widthCm: 3,
+  };
+}
+
+function migrateExpenseRow(r) {
+  if (!r || typeof r !== "object") return { ...defaultExpenseRow(), id: newId() };
+  const id = typeof r.id === "string" ? r.id : newId();
+  const widthCm = Number(r.widthCm);
+  const w = Number.isFinite(widthCm) && widthCm > 0 ? widthCm : 3;
+
+  const needsLegacyMigration =
+    !("yearMonth" in r) &&
+    (r.yearLabel !== undefined ||
+      r.monthLabel !== undefined ||
+      r.startDate !== undefined ||
+      r.endDate !== undefined ||
+      r.no !== undefined);
+
+  let yearMonth = String(r.yearMonth ?? "");
+  let period = String(r.period ?? "");
+
+  if (needsLegacyMigration) {
+    yearMonth = [r.yearLabel, r.monthLabel].filter((s) => String(s ?? "").trim()).join(" ");
+    if (!period.trim() && (r.startDate != null || r.endDate != null)) {
+      period = `${String(r.startDate ?? "").trim()} ~ ${String(r.endDate ?? "").trim()}`.trim();
+    }
+  }
+
+  return {
+    id,
+    title: String(r.title ?? ""),
+    fiscalYear: String(r.fiscalYear ?? ""),
+    yearMonth,
+    period,
+    serialLabel: String(r.serialLabel ?? ""),
+    orgName: String(r.orgName ?? ""),
+    widthCm: w,
   };
 }
 
@@ -81,13 +114,17 @@ function normalizeLedgerState(raw) {
 
 function normalizeExpenseState(raw) {
   if (!Array.isArray(raw) || raw.length === 0) {
-    return [1, 2, 3, 4, 5].map((n) => defaultExpenseRow(n));
+    return [
+      migrateExpenseRow({ ...defaultExpenseRow(), id: newId() }),
+      migrateExpenseRow({
+        ...defaultExpenseRow(),
+        id: newId(),
+        serialLabel: "5책중2책",
+        period: "11일(554) ~ 17일",
+      }),
+    ];
   }
-  return raw.map((r, i) =>
-    r && typeof r === "object"
-      ? { ...defaultExpenseRow(i + 1), ...r, id: typeof r.id === "string" ? r.id : newId() }
-      : defaultExpenseRow(i + 1)
-  );
+  return raw.map((r) => migrateExpenseRow(r));
 }
 
 function groupLedgerByBox(rows) {
@@ -209,7 +246,7 @@ export default function Archive() {
   }, []);
 
   const addExpenseRow = useCallback(() => {
-    setExpenseRows((prev) => [...prev, defaultExpenseRow(prev.length + 1)]);
+    setExpenseRows((prev) => [...prev, { ...defaultExpenseRow(), id: newId(), serialLabel: "", period: "" }]);
   }, []);
 
   const removeExpenseRow = useCallback((id) => {
@@ -244,8 +281,6 @@ export default function Archive() {
     window.addEventListener("afterprint", handleAfter);
     window.print();
   }, []);
-
-  const expensePages = useMemo(() => buildExpensePages(expenseRows), [expenseRows]);
 
   const printExpense = useCallback(() => {
     const s = document.createElement("style");
@@ -285,6 +320,7 @@ export default function Archive() {
         @page { size: A4; margin: 12mm; }
         .print-labels-stack .label-page { page-break-after: always; }
         .print-labels-stack .label-page:last-child { page-break-after: auto; }
+        .binder-spine-card { break-inside: avoid; page-break-inside: avoid; }
       `}</style>
 
       <div className="screen-root">
@@ -292,8 +328,8 @@ export default function Archive() {
           <p className="text-[11px] font-semibold uppercase tracking-wide text-[#787774]">문서 보존</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#37352f]">보존문서</h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#787774]">
-            보존문서관리대장·표지·보존상자 라벨(85mm×85mm)과 지출증빙서 옆면 표지를 브라우저에서 입력·인쇄합니다. 데이터는 이
-            기기의 localStorage에만 저장됩니다.
+            보존문서관리대장·표지·보존상자 라벨(85mm×85mm)과 편철 옆면 표지를 브라우저에서 입력·인쇄합니다. 데이터는 이 기기의
+            localStorage에만 저장됩니다.
           </p>
         </header>
 
@@ -302,7 +338,7 @@ export default function Archive() {
             보존문서 관리
           </TabButton>
           <TabButton active={tab === "expense"} onClick={() => setTab("expense")}>
-            지출증빙서 표지
+            편철 표지
           </TabButton>
         </div>
 
@@ -533,152 +569,127 @@ export default function Archive() {
           </section>
         ) : (
           <section className="space-y-8">
-            <div className="rounded-xl border border-[#e9e9e7] bg-[#fbfbfa] p-4 sm:p-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-base font-semibold text-[#37352f]">지출증빙서 옆면 표지 — 기초자료</h2>
-                  <p className="mt-1 text-xs text-[#787774]">
-                    엑셀 「기초자료」 A~J열과 동일합니다. J열 너비(cm)는 0이면 VBA와 같이 3cm로 처리됩니다. 출력물은 매크로와 같이
-                    A4 가로·여백 1cm·함초롬바탕 14pt·제목 세로 23pt·실선 테두리로 맞춥니다.
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={addExpenseRow}
-                    className="rounded-md border border-[#e9e9e7] bg-white px-3 py-2 text-xs font-medium text-[#37352f] shadow-sm hover:bg-[#f7f6f3]"
-                  >
-                    행 추가
-                  </button>
-                  <button
-                    type="button"
-                    onClick={printExpense}
-                    className="rounded-md bg-[#2383e2] px-3 py-2 text-xs font-medium text-white shadow-sm hover:bg-[#1a6ec4]"
-                  >
-                    인쇄
-                  </button>
-                </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-base font-semibold text-[#37352f]">편철 옆면 표지</h2>
+                <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[#787774]">
+                  문서 편철 시 옆면에 붙이는 표지를 만듭니다. 카드마다 너비(cm)를 정할 수 있고, 미리보기는 가로로 배치되며 한 줄에
+                  들어가지 않으면 자동으로 다음 줄로 넘어갑니다. 인쇄는 A4 가로·여백 1cm입니다.
+                </p>
               </div>
-
-              <div className="mt-4 overflow-x-auto rounded-lg border border-[#e9e9e7] bg-white">
-                <table className="min-w-[900px] w-full border-collapse text-left text-[11px]">
-                  <thead>
-                    <tr className="border-b border-[#e9e9e7] bg-[#f7f6f3] text-[#5c5b57]">
-                      <th className="px-2 py-2 font-medium">번호</th>
-                      <th className="px-2 py-2 font-medium">제목</th>
-                      <th className="px-2 py-2 font-medium">회계연도</th>
-                      <th className="px-2 py-2 font-medium">연</th>
-                      <th className="px-2 py-2 font-medium">월</th>
-                      <th className="px-2 py-2 font-medium">시작일</th>
-                      <th className="px-2 py-2 font-medium">종료일</th>
-                      <th className="px-2 py-2 font-medium">일련번호</th>
-                      <th className="px-2 py-2 font-medium">기관명</th>
-                      <th className="px-2 py-2 font-medium">너비(cm)</th>
-                      <th className="px-2 py-2 font-medium">삭제</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {expenseRows.map((row, idx) => (
-                      <tr key={row.id} className="border-b border-[#f0f0ef]">
-                        <td className="p-0">
-                          <input
-                            type="number"
-                            className="w-12 border-0 bg-transparent px-2 py-1.5 text-[11px] outline-none focus:bg-[#f7f6f3]"
-                            value={row.no}
-                            onChange={(e) => updateExpense(row.id, { no: Number(e.target.value) || idx + 1 })}
-                          />
-                        </td>
-                        <td className="p-0">
-                          <input
-                            className="w-full min-w-[140px] border-0 bg-transparent px-2 py-1.5 text-[11px] outline-none focus:bg-[#f7f6f3]"
-                            value={row.title}
-                            onChange={(e) => updateExpense(row.id, { title: e.target.value })}
-                          />
-                        </td>
-                        <td className="p-0">
-                          <input
-                            className="w-24 border-0 bg-transparent px-2 py-1.5 text-[11px] outline-none focus:bg-[#f7f6f3]"
-                            value={row.fiscalYear}
-                            onChange={(e) => updateExpense(row.id, { fiscalYear: e.target.value })}
-                          />
-                        </td>
-                        <td className="p-0">
-                          <input
-                            className="w-20 border-0 bg-transparent px-2 py-1.5 text-[11px] outline-none focus:bg-[#f7f6f3]"
-                            value={row.yearLabel}
-                            onChange={(e) => updateExpense(row.id, { yearLabel: e.target.value })}
-                          />
-                        </td>
-                        <td className="p-0">
-                          <input
-                            className="w-16 border-0 bg-transparent px-2 py-1.5 text-[11px] outline-none focus:bg-[#f7f6f3]"
-                            value={row.monthLabel}
-                            onChange={(e) => updateExpense(row.id, { monthLabel: e.target.value })}
-                          />
-                        </td>
-                        <td className="p-0">
-                          <input
-                            className="w-28 border-0 bg-transparent px-2 py-1.5 text-[11px] outline-none focus:bg-[#f7f6f3]"
-                            value={row.startDate}
-                            onChange={(e) => updateExpense(row.id, { startDate: e.target.value })}
-                            placeholder="11일(553)"
-                          />
-                        </td>
-                        <td className="p-0">
-                          <input
-                            className="w-28 border-0 bg-transparent px-2 py-1.5 text-[11px] outline-none focus:bg-[#f7f6f3]"
-                            value={row.endDate}
-                            onChange={(e) => updateExpense(row.id, { endDate: e.target.value })}
-                          />
-                        </td>
-                        <td className="p-0">
-                          <input
-                            className="w-28 border-0 bg-transparent px-2 py-1.5 text-[11px] outline-none focus:bg-[#f7f6f3]"
-                            value={row.serialLabel}
-                            onChange={(e) => updateExpense(row.id, { serialLabel: e.target.value })}
-                            placeholder="5책중1책"
-                          />
-                        </td>
-                        <td className="p-0">
-                          <input
-                            className="w-full min-w-[80px] border-0 bg-transparent px-2 py-1.5 text-[11px] outline-none focus:bg-[#f7f6f3]"
-                            value={row.orgName}
-                            onChange={(e) => updateExpense(row.id, { orgName: e.target.value })}
-                          />
-                        </td>
-                        <td className="p-0">
-                          <input
-                            type="number"
-                            step="0.1"
-                            className="w-14 border-0 bg-transparent px-2 py-1.5 text-[11px] outline-none focus:bg-[#f7f6f3]"
-                            value={row.widthCm}
-                            onChange={(e) => updateExpense(row.id, { widthCm: Number(e.target.value) || 3 })}
-                          />
-                        </td>
-                        <td className="px-2 py-1.5">
-                          <button
-                            type="button"
-                            onClick={() => removeExpenseRow(row.id)}
-                            className="rounded border border-[#e9e9e7] bg-white px-2 py-0.5 text-[10px] text-[#787774] hover:bg-[#fff5f5] hover:text-[#b91c1c]"
-                          >
-                            삭제
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="no-print flex shrink-0 flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={addExpenseRow}
+                  className="rounded-md border border-[#e9e9e7] bg-white px-3 py-2 text-xs font-medium text-[#37352f] shadow-sm transition hover:bg-[#f7f6f3]"
+                >
+                  표지 추가
+                </button>
+                <button
+                  type="button"
+                  onClick={printExpense}
+                  className="rounded-md bg-[#2383e2] px-3 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-[#1a6ec4]"
+                >
+                  인쇄
+                </button>
               </div>
             </div>
 
-            <div className="rounded-xl border border-[#e9e9e7] bg-white p-4 shadow-sm sm:p-5">
-              <h3 className="text-sm font-semibold text-[#37352f]">출력물 미리보기 (엑셀 「출력물」 시트)</h3>
+            <div className="space-y-4">
+              {expenseRows.map((row, idx) => (
+                <div
+                  key={row.id}
+                  className="rounded-xl border border-[#e9e9e7] bg-white p-4 shadow-[0_1px_2px_rgba(15,15,15,0.04)] sm:p-5"
+                >
+                  <div className="mb-4 flex items-center justify-between gap-2 border-b border-[#f0f0ef] pb-3">
+                    <span className="text-[12px] font-semibold text-[#37352f]">표지 {idx + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeExpenseRow(row.id)}
+                      className="rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-2.5 py-1 text-[11px] font-medium text-[#787774] transition hover:border-[#fecaca] hover:bg-[#fff5f5] hover:text-[#b91c1c]"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-1 sm:col-span-2">
+                      <label className="block text-[11px] font-medium text-[#787774]">제목</label>
+                      <input
+                        value={row.title}
+                        onChange={(e) => updateExpense(row.id, { title: e.target.value })}
+                        className="w-full rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-2 text-[13px] text-[#37352f] shadow-inner outline-none transition focus:border-[#2383e2] focus:bg-white focus:ring-2 focus:ring-[#2383e2]/20"
+                        placeholder="학교회계지출증빙서"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-medium text-[#787774]">회계연도</label>
+                      <input
+                        value={row.fiscalYear}
+                        onChange={(e) => updateExpense(row.id, { fiscalYear: e.target.value })}
+                        className="w-full rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-2 text-[13px] text-[#37352f] outline-none transition focus:border-[#2383e2] focus:bg-white focus:ring-2 focus:ring-[#2383e2]/20"
+                        placeholder="2024회계"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-medium text-[#787774]">연월</label>
+                      <input
+                        value={row.yearMonth}
+                        onChange={(e) => updateExpense(row.id, { yearMonth: e.target.value })}
+                        className="w-full rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-2 text-[13px] text-[#37352f] outline-none transition focus:border-[#2383e2] focus:bg-white focus:ring-2 focus:ring-[#2383e2]/20"
+                        placeholder="2024년 3월"
+                      />
+                    </div>
+                    <div className="space-y-1 sm:col-span-2">
+                      <label className="block text-[11px] font-medium text-[#787774]">기간</label>
+                      <input
+                        value={row.period}
+                        onChange={(e) => updateExpense(row.id, { period: e.target.value })}
+                        className="w-full rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-2 text-[13px] text-[#37352f] outline-none transition focus:border-[#2383e2] focus:bg-white focus:ring-2 focus:ring-[#2383e2]/20"
+                        placeholder="~ 11일(553)"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-medium text-[#787774]">일련번호</label>
+                      <input
+                        value={row.serialLabel}
+                        onChange={(e) => updateExpense(row.id, { serialLabel: e.target.value })}
+                        className="w-full rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-2 text-[13px] text-[#37352f] outline-none transition focus:border-[#2383e2] focus:bg-white focus:ring-2 focus:ring-[#2383e2]/20"
+                        placeholder="5책중1책"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-medium text-[#787774]">기관명</label>
+                      <input
+                        value={row.orgName}
+                        onChange={(e) => updateExpense(row.id, { orgName: e.target.value })}
+                        className="w-full rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-2 text-[13px] text-[#37352f] outline-none transition focus:border-[#2383e2] focus:bg-white focus:ring-2 focus:ring-[#2383e2]/20"
+                        placeholder="은가람중학교"
+                      />
+                    </div>
+                    <div className="space-y-1 sm:col-span-2">
+                      <label className="block text-[11px] font-medium text-[#787774]">너비 (cm)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0.5"
+                        value={row.widthCm}
+                        onChange={(e) => updateExpense(row.id, { widthCm: Number(e.target.value) || 3 })}
+                        className="w-full max-w-[8rem] rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-2 text-[13px] text-[#37352f] outline-none transition focus:border-[#2383e2] focus:bg-white focus:ring-2 focus:ring-[#2383e2]/20"
+                      />
+                      <p className="text-[10px] text-[#9b9a97]">기본 3cm. 편철 두께에 맞게 조정하세요.</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-xl border border-[#e9e9e7] bg-[#fbfbfa] p-4 sm:p-5">
+              <h3 className="text-sm font-semibold text-[#37352f]">미리보기</h3>
               <p className="mt-1 text-xs text-[#787774]">
-                실제 크기는 A4 가로(인쇄 가용 폭 약 27.7cm) 기준입니다. 좌우로 스크롤해 확인하세요. 페이지가 넘치면 VBA와 같이
-                다음 장으로 나뉩니다 ({expensePages.length}페이지).
+                인쇄 시에도 동일한 배치이며, 가용 폭을 넘기면 다음 줄로 이어집니다.
               </p>
-              <div className="mt-4 overflow-x-auto rounded-lg border border-[#e9e9e7] bg-[#fafafa] p-4">
-                <ExpenseVoucherDocument pages={expensePages} printMode={false} />
+              <div className="mt-4 rounded-lg border border-[#e9e9e7] bg-white p-4 sm:p-6">
+                <BinderSpineGrid rows={expenseRows} forPrint={false} />
               </div>
             </div>
           </section>
@@ -704,7 +715,9 @@ export default function Archive() {
       </div>
 
       <div className="archive-print-bundle print-expense">
-        <ExpenseVoucherDocument pages={expensePages} printMode />
+        <div className="flex min-h-[calc(210mm-20mm)] w-full items-center justify-center print:min-h-[190mm]">
+          <BinderSpineGrid rows={expenseRows} forPrint />
+        </div>
       </div>
     </main>
   );
