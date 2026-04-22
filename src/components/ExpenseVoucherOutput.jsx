@@ -1,11 +1,11 @@
 /**
  * 편철 표지 — 9행×N열 큰 표
- * - 한 페이지에 5개 열이 꽉 차도록 (A4 가로, 여백 1cm 기준 가용 폭 27.7cm에 맞춰 스케일)
- * - 인쇄 시 표 전체 높이 19cm(190mm) 고정 → 한 페이지 안에 수용 (Archive print CSS)
+ * - 한 페이지에 5개 열이 꽉 차도록 (A4 세로, 여백 1cm 기준 가용 폭 19cm에 맞춰 스케일)
  * - 바깥 테두리 3px, 안쪽 가로/세로 1px
  */
 
-const INNER_PAGE_WIDTH_CM = 27.7; // 29.7cm - 1cm*2 (좌우 여백)
+// A4 세로(210mm) 기준: 21cm - 좌우 여백(1cm*2) = 19cm
+const INNER_PAGE_WIDTH_CM = 19;
 const COLS_PER_PAGE = 5;
 
 function safeText(v) {
@@ -71,7 +71,7 @@ export function SpineTable({ rows }) {
         .spine-sheet-table .spine-row-title { height: 200px; }
         .spine-sheet-table .spine-title-inner {
           min-height: 160px;
-          font-size: 20px;
+          font-size: 30px;
           line-height: 1.1;
         }
       `}</style>
@@ -120,7 +120,7 @@ export function SpineTable({ rows }) {
           <tr className="spine-row spine-row-value">
             {rows.map((r, i) => (
               <Cell key={r.id ?? i} style={colStyles[i]}>
-                <ValueText>{safeText(r.serialLabel)}</ValueText>
+                <ValueText>{safeText(r.serialLabel ?? r.serial ?? r.no)}</ValueText>
               </Cell>
             ))}
           </tr>
