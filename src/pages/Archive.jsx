@@ -285,7 +285,8 @@ export default function Archive() {
   const printExpense = useCallback(() => {
     const s = document.createElement("style");
     s.id = "archive-dynamic-print-page";
-    s.textContent = "@page { size: A4 portrait; margin: 1cm; }";
+    // 일부 브라우저에서 `A4 portrait` 문법을 무시하는 경우가 있어, mm로 명시합니다.
+    s.textContent = "@page { size: 210mm 297mm; margin: 1cm; }";
     document.head.appendChild(s);
     document.body.classList.add("archive-printing-expense");
     const handleAfter = () => {
@@ -317,7 +318,7 @@ export default function Archive() {
             print-color-adjust: exact;
           }
         }
-        @page { size: A4; margin: 12mm; }
+        @page { size: A4 portrait; margin: 12mm; }
         .print-labels-stack .label-page { page-break-after: always; }
         .print-labels-stack .label-page:last-child { page-break-after: auto; }
       `}</style>
