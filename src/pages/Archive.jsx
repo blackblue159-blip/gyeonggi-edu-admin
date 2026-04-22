@@ -317,21 +317,20 @@ function buildSpinePrintHtml(rows) {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
         font-family: Pretendard, \"Malgun Gothic\", system-ui, sans-serif;
+        padding-top: 8mm;
+        box-sizing: border-box;
       }
       .page {
         width: 277mm;
         height: 190mm;
-        box-sizing: border-box;
-        padding-top: 5mm;
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: center;
       }
       table {
         width: auto;
-        height: 185mm;
-        border-collapse: separate;
-        border-spacing: 3mm 0;
+        height: 190mm;
+        border-collapse: collapse;
         border: 3px solid #000;
         table-layout: fixed;
         page-break-inside: avoid;
@@ -347,31 +346,30 @@ function buildSpinePrintHtml(rows) {
         vertical-align: middle;
         padding: 0.5mm 1mm;
         box-sizing: border-box;
+        margin-right: 3mm;
+      }
+      tr td.cell:last-child {
+        margin-right: 0;
       }
       tr.h-label td.cell { height: 10mm; }
       tr.h-value td.cell { height: 12mm; }
-      /* 185mm - (라벨 4*10mm) - (값 4*12mm) = 97mm (.page 상단 padding 5mm 반영, 표 높이 185mm) */
-      tr.h-title td.cell {
-        height: 97mm;
-        padding: 0;
-        vertical-align: middle;
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
+      /* 190mm - (라벨 4*10mm) - (값 4*12mm) = 102mm */
+      tr.h-title td.cell { height: 102mm; padding: 0; }
       .label { font-weight: 700; font-size: 10pt; }
       .value { font-size: 10pt; }
       .title {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         writing-mode: vertical-rl;
         text-orientation: mixed;
+        text-align: center;
+        letter-spacing: 0.3em;
         font-weight: 800;
         font-size: 24pt;
         line-height: 1.1;
-        letter-spacing: 0.3em;
-        text-align: center;
         overflow: hidden;
-        max-height: 100%;
       }
     </style>
   </head>
