@@ -1,8 +1,8 @@
 /**
- * 편철 표지 — 원본 엑셀과 동일한 9행×N열 “큰 표” 출력물
+ * 편철 표지 — 9행×N열 큰 표
  * - 한 페이지에 5개 열이 꽉 차도록 (A4 가로, 여백 1cm 기준 가용 폭 27.7cm에 맞춰 스케일)
+ * - 인쇄 시 표 전체 높이 19cm(190mm) 고정 → 한 페이지 안에 수용 (Archive print CSS)
  * - 바깥 테두리 3px, 안쪽 가로/세로 1px
- * - 제목(7행): 세로, 큰 글씨, 굵게, 높이 최소 200px
  */
 
 const INNER_PAGE_WIDTH_CM = 27.7; // 29.7cm - 1cm*2 (좌우 여백)
@@ -46,11 +46,11 @@ function Cell({ children, className = "", style }) {
 }
 
 function LabelText({ children }) {
-  return <span className="text-[14px] font-bold">{children}</span>;
+  return <span className="spine-label-text text-[14px] font-bold">{children}</span>;
 }
 
 function ValueText({ children }) {
-  return <span className="text-[14px]">{children}</span>;
+  return <span className="spine-value-text text-[14px]">{children}</span>;
 }
 
 /** @param {{ rows: any[] }} props */
@@ -63,94 +63,99 @@ export function SpineTable({ rows }) {
   }));
 
   return (
-    <table
-      className="border-collapse bg-white"
-      style={{
-        border: "3px solid black",
-        tableLayout: "fixed",
-      }}
-    >
-      <tbody>
-        <tr style={{ height: 36 }}>
-          {rows.map((r, i) => (
-            <Cell key={r.id ?? i} style={colStyles[i]}>
-              <LabelText>회계연도</LabelText>
-            </Cell>
-          ))}
-        </tr>
-        <tr style={{ height: 36 }}>
-          {rows.map((r, i) => (
-            <Cell key={r.id ?? i} style={colStyles[i]}>
-              <ValueText>{safeText(r.fiscalYear)}</ValueText>
-            </Cell>
-          ))}
-        </tr>
-        <tr style={{ height: 36 }}>
-          {rows.map((r, i) => (
-            <Cell key={r.id ?? i} style={colStyles[i]}>
-              <LabelText>연월</LabelText>
-            </Cell>
-          ))}
-        </tr>
-        <tr style={{ height: 38 }}>
-          {rows.map((r, i) => (
-            <Cell key={r.id ?? i} style={colStyles[i]}>
-              <ValueText>{safeText(`${String(r.yearMonth ?? "").trim()} ${String(r.period ?? "").trim()}`.trim())}</ValueText>
-            </Cell>
-          ))}
-        </tr>
-        <tr style={{ height: 36 }}>
-          {rows.map((r, i) => (
-            <Cell key={r.id ?? i} style={colStyles[i]}>
-              <LabelText>일련번호</LabelText>
-            </Cell>
-          ))}
-        </tr>
-        <tr style={{ height: 36 }}>
-          {rows.map((r, i) => (
-            <Cell key={r.id ?? i} style={colStyles[i]}>
-              <ValueText>{safeText(r.serialLabel)}</ValueText>
-            </Cell>
-          ))}
-        </tr>
-        <tr style={{ height: 220 }}>
-          {rows.map((r, i) => (
-            <Cell
-              key={r.id ?? i}
-              style={colStyles[i]}
-              className="p-0"
-            >
-              <div
-                className="flex h-full w-full items-center justify-center font-bold"
-                style={{
-                  writingMode: "vertical-rl",
-                  textOrientation: "mixed",
-                  fontSize: 22,
-                  minHeight: 200,
-                  lineHeight: 1.1,
-                }}
-              >
-                {safeText(r.title)}
-              </div>
-            </Cell>
-          ))}
-        </tr>
-        <tr style={{ height: 36 }}>
-          {rows.map((r, i) => (
-            <Cell key={r.id ?? i} style={colStyles[i]}>
-              <LabelText>기관명</LabelText>
-            </Cell>
-          ))}
-        </tr>
-        <tr style={{ height: 36 }}>
-          {rows.map((r, i) => (
-            <Cell key={r.id ?? i} style={colStyles[i]}>
-              <ValueText>{safeText(r.orgName)}</ValueText>
-            </Cell>
-          ))}
-        </tr>
-      </tbody>
-    </table>
+    <>
+      <style>{`
+        .spine-sheet-table { table-layout: fixed; }
+        .spine-sheet-table .spine-row-label { height: 36px; }
+        .spine-sheet-table .spine-row-value { height: 40px; }
+        .spine-sheet-table .spine-row-title { height: 200px; }
+        .spine-sheet-table .spine-title-inner {
+          min-height: 160px;
+          font-size: 20px;
+          line-height: 1.1;
+        }
+      `}</style>
+      <table
+        className="spine-sheet-table border-collapse bg-white"
+        style={{
+          border: "3px solid black",
+        }}
+      >
+        <tbody>
+          <tr className="spine-row spine-row-label">
+            {rows.map((r, i) => (
+              <Cell key={r.id ?? i} style={colStyles[i]}>
+                <LabelText>회계연도</LabelText>
+              </Cell>
+            ))}
+          </tr>
+          <tr className="spine-row spine-row-value">
+            {rows.map((r, i) => (
+              <Cell key={r.id ?? i} style={colStyles[i]}>
+                <ValueText>{safeText(r.fiscalYear)}</ValueText>
+              </Cell>
+            ))}
+          </tr>
+          <tr className="spine-row spine-row-label">
+            {rows.map((r, i) => (
+              <Cell key={r.id ?? i} style={colStyles[i]}>
+                <LabelText>연월</LabelText>
+              </Cell>
+            ))}
+          </tr>
+          <tr className="spine-row spine-row-value">
+            {rows.map((r, i) => (
+              <Cell key={r.id ?? i} style={colStyles[i]}>
+                <ValueText>{safeText(`${String(r.yearMonth ?? "").trim()} ${String(r.period ?? "").trim()}`.trim())}</ValueText>
+              </Cell>
+            ))}
+          </tr>
+          <tr className="spine-row spine-row-label">
+            {rows.map((r, i) => (
+              <Cell key={r.id ?? i} style={colStyles[i]}>
+                <LabelText>일련번호</LabelText>
+              </Cell>
+            ))}
+          </tr>
+          <tr className="spine-row spine-row-value">
+            {rows.map((r, i) => (
+              <Cell key={r.id ?? i} style={colStyles[i]}>
+                <ValueText>{safeText(r.serialLabel)}</ValueText>
+              </Cell>
+            ))}
+          </tr>
+          <tr className="spine-row spine-row-title">
+            {rows.map((r, i) => (
+              <Cell key={r.id ?? i} style={colStyles[i]} className="p-0">
+                <div
+                  className="spine-title-inner flex h-full w-full items-center justify-center font-bold"
+                  style={{
+                    writingMode: "vertical-rl",
+                    textOrientation: "mixed",
+                  }}
+                >
+                  {safeText(r.title)}
+                </div>
+              </Cell>
+            ))}
+          </tr>
+          <tr className="spine-row spine-row-label">
+            {rows.map((r, i) => (
+              <Cell key={r.id ?? i} style={colStyles[i]}>
+                <LabelText>기관명</LabelText>
+              </Cell>
+            ))}
+          </tr>
+          <tr className="spine-row spine-row-value">
+            {rows.map((r, i) => (
+              <Cell key={r.id ?? i} style={colStyles[i]}>
+                <ValueText>{safeText(r.orgName)}</ValueText>
+              </Cell>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </>
   );
 }
 

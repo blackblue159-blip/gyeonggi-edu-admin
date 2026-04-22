@@ -285,7 +285,7 @@ export default function Archive() {
   const printExpense = useCallback(() => {
     const s = document.createElement("style");
     s.id = "archive-dynamic-print-page";
-    s.textContent = "@page { size: A4 landscape; margin: 1cm; }";
+    s.textContent = "@page { size: 297mm 210mm; margin: 1cm; }";
     document.head.appendChild(s);
     document.body.classList.add("archive-printing-expense");
     const handleAfter = () => {
@@ -320,7 +320,55 @@ export default function Archive() {
         @page { size: A4; margin: 12mm; }
         .print-labels-stack .label-page { page-break-after: always; }
         .print-labels-stack .label-page:last-child { page-break-after: auto; }
-        .spine-doc-print table { break-inside: avoid; page-break-inside: avoid; }
+      `}</style>
+      <style>{`
+        /* 편철 표지 인쇄: A4 가로 짧은 변 21cm − 여백 2cm = 표 높이 19cm */
+        @media print {
+          body.archive-printing-expense table.spine-sheet-table {
+            height: 190mm;
+            max-height: 190mm;
+            box-sizing: border-box;
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          body.archive-printing-expense table.spine-sheet-table thead,
+          body.archive-printing-expense table.spine-sheet-table tbody,
+          body.archive-printing-expense table.spine-sheet-table tr,
+          body.archive-printing-expense table.spine-sheet-table td {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          body.archive-printing-expense table.spine-sheet-table tr.spine-row-label td {
+            height: 10mm !important;
+            max-height: 10mm !important;
+            padding: 0.5mm 1mm !important;
+            vertical-align: middle !important;
+          }
+          body.archive-printing-expense table.spine-sheet-table tr.spine-row-value td {
+            height: 12mm !important;
+            max-height: 12mm !important;
+            padding: 0.5mm 1mm !important;
+            vertical-align: middle !important;
+          }
+          /* 19cm − 라벨 4×1cm − 값 4×1.2cm = 10.2cm */
+          body.archive-printing-expense table.spine-sheet-table tr.spine-row-title td {
+            height: 102mm !important;
+            max-height: 102mm !important;
+            padding: 0 !important;
+            vertical-align: middle !important;
+          }
+          body.archive-printing-expense table.spine-sheet-table .spine-title-inner {
+            min-height: 0 !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            font-size: 16pt !important;
+            overflow: hidden !important;
+          }
+          body.archive-printing-expense table.spine-sheet-table .spine-label-text,
+          body.archive-printing-expense table.spine-sheet-table .spine-value-text {
+            font-size: 10pt !important;
+          }
+        }
       `}</style>
 
       <div className="screen-root">
