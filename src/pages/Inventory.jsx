@@ -60,6 +60,82 @@ function formatYmd(date) {
   return `${y}.${m}.${d}`;
 }
 
+function startOfDay(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+/** @param {Date} earlier @param {Date} later (same day or after earlier) */
+function calendarDiffYM(earlier, later) {
+  let y = later.getFullYear() - earlier.getFullYear();
+  let m = later.getMonth() - earlier.getMonth();
+  const d = later.getDate() - earlier.getDate();
+  if (d < 0) m--;
+  if (m < 0) {
+    y--;
+    m += 12;
+  }
+  return { years: y, months: m };
+}
+
+/**
+ * 내용연수 만료일 − 기준일(오늘) 잔여·초과 기간 표시
+ * @param {Date | null} expiryDate
+ * @param {Date} referenceDate
+ */
+function remainingPeriodDisplay(expiryDate, referenceDate) {
+  const exp0 = expiryDate instanceof Date && !Number.isNaN(expiryDate.getTime()) ? startOfDay(expiryDate) : null;
+  const ref0 = startOfDay(referenceDate);
+  if (!exp0 || !ref0) {
+    return { text: "-", uiClass: "text-[#787774]", tone: "muted" };
+  }
+  if (exp0.getTime() > ref0.getTime()) {
+    const { years, months } = calendarDiffYM(ref0, exp0);
+    const totalMonths = years * 12 + months;
+    if (totalMonths < 12) {
+      return {
+        text: `${totalMonths}개월`,
+        uiClass: "text-[#c2410c] font-medium",
+        tone: "orange",
+        excelArgb: "FF9A3412",
+      };
+    }
+    if (years > 0 && months > 0) {
+      return {
+        text: `${years}년 ${months}개월`,
+        uiClass: "text-[#15803d] font-medium",
+        tone: "green",
+        excelArgb: "FF166534",
+      };
+    }
+    if (years > 0) {
+      return { text: `${years}년`, uiClass: "text-[#15803d] font-medium", tone: "green", excelArgb: "FF166534" };
+    }
+    return { text: `${months}개월`, uiClass: "text-[#15803d] font-medium", tone: "green", excelArgb: "FF166534" };
+  }
+  if (exp0.getTime() === ref0.getTime()) {
+    return {
+      text: "0개월",
+      uiClass: "text-[#c2410c] font-medium",
+      tone: "orange",
+      excelArgb: "FF9A3412",
+    };
+  }
+  const { years, months } = calendarDiffYM(exp0, ref0);
+  if (years > 0 && months > 0) {
+    return {
+      text: `${years}년 ${months}개월 초과`,
+      uiClass: "text-[#b91c1c] font-medium",
+      tone: "red",
+      excelArgb: "FFB91C1C",
+    };
+  }
+  if (years > 0) {
+    return { text: `${years}년 초과`, uiClass: "text-[#b91c1c] font-medium", tone: "red", excelArgb: "FFB91C1C" };
+  }
+  return { text: `${months}개월 초과`, uiClass: "text-[#b91c1c] font-medium", tone: "red", excelArgb: "FFB91C1C" };
+}
+
 function diffYearsFloor(from, to) {
   if (!(from instanceof Date) || !(to instanceof Date)) return null;
   const a = new Date(from.getFullYear(), from.getMonth(), from.getDate());
@@ -256,6 +332,7 @@ export default function Inventory() {
         _repair: repair,
         _expiryDate: expiryDate,
         _expiryTone: expiryTone,
+        _remaining: remainingPeriodDisplay(expiryDate, today),
       };
     });
   }, [items, today]);
@@ -485,7 +562,7 @@ export default function Inventory() {
     // 1~4행: 상단 요약 정보 (현재 화면과 동일하게)
     const exportAt = new Date();
     ws.addRow(["물품대장 현재목록"]);
-    ws.mergeCells(1, 1, 1, 10);
+    ws.mergeCells(1, 1, 1, 11);
     ws.getRow(1).height = 28;
     ws.getCell("A1").font = { bold: true, size: 16, color: { argb: "FF111827" } };
     ws.getCell("A1").alignment = { vertical: "middle" };
@@ -511,6 +588,7 @@ export default function Inventory() {
       "내용연수",
       "사용연수",
       "내용연수만료일",
+      "잔여기간",
       "수리한계금액",
     ];
 
@@ -524,6 +602,7 @@ export default function Inventory() {
       { key: "life" },
       { key: "used" },
       { key: "expiryDate" },
+      { key: "remaining" },
       { key: "limit" },
     ];
 
@@ -559,6 +638,7 @@ export default function Inventory() {
         life: Number.isFinite(it._lifeYears) ? it._lifeYears : "",
         used: Number.isFinite(it._usedYears) ? `${it._usedYears.toFixed(1)}년` : "",
         expiryDate: it._expiryDate ? formatYmd(it._expiryDate) : "",
+        remaining: it._remaining?.text ?? "-",
         limit: it._repair && Number.isFinite(it._repair.value) ? Math.round(it._repair.value) : "",
       });
       row.height = 18;
@@ -575,6 +655,10 @@ export default function Inventory() {
       const expiryCell = row.getCell(9);
       const f = EXPIRY_FONT[it._expiryTone];
       if (f) expiryCell.font = { ...(expiryCell.font || {}), color: { argb: f }, bold: true };
+
+      const remCell = row.getCell(10);
+      const remArgb = it._remaining?.excelArgb;
+      if (remArgb) remCell.font = { ...(remCell.font || {}), color: { argb: remArgb }, bold: true };
     }
 
     ws.getColumn("price").numFmt = "#,##0";
@@ -582,7 +666,7 @@ export default function Inventory() {
 
     // 테두리 + 컬럼 너비 자동 맞춤
     const tableEnd = ws.lastRow.number;
-    const colCount = 10;
+    const colCount = 11;
     for (let r = 1; r <= tableEnd; r++) {
       const row = ws.getRow(r);
       for (let c = 1; c <= colCount; c++) {
@@ -829,6 +913,7 @@ export default function Inventory() {
                     <SortTh label="내용연수 만료일" active={sort.key === "expiryDate"} dir={sort.dir} onClick={() => {
                       setSort((s) => ({ key: "expiryDate", dir: s.key === "expiryDate" ? (s.dir === "asc" ? "desc" : "asc") : "asc" }));
                     }} />
+                    <th className="px-4 py-3 font-medium whitespace-nowrap text-[#787774]">잔여기간</th>
                     <SortTh label="사용연수" active={sort.key === "usedYears"} dir={sort.dir} onClick={() => {
                       setSort((s) => ({ key: "usedYears", dir: s.key === "usedYears" ? (s.dir === "asc" ? "desc" : "asc") : "asc" }));
                     }} />
@@ -837,7 +922,7 @@ export default function Inventory() {
                 <tbody>
                   {sorted.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-4 py-12 text-center text-[13px] text-[#787774]">
+                      <td colSpan={10} className="px-4 py-12 text-center text-[13px] text-[#787774]">
                         불러온 데이터가 없습니다. 엑셀을 불러오거나 검색어를 지워 보세요.
                       </td>
                     </tr>
@@ -888,6 +973,9 @@ export default function Inventory() {
                           >
                             {it._expiryDate ? formatYmd(it._expiryDate) : "-"}
                           </span>
+                        </td>
+                        <td className={`px-4 py-3.5 whitespace-nowrap ${it._remaining?.uiClass ?? "text-[#787774]"}`}>
+                          {it._remaining?.text ?? "-"}
                         </td>
                         <td className="px-4 py-3.5 text-[#5c5b57]">
                           {Number.isFinite(it._usedYears) ? `${it._usedYears.toFixed(1)}년` : "-"}
