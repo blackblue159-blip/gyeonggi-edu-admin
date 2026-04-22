@@ -1,11 +1,11 @@
 /**
- * 편철 표지 — 9행×N열 큰 표
- * - 한 페이지에 5개 열이 꽉 차도록 (A4 세로, 여백 1cm 기준 가용 폭 19cm에 맞춰 스케일)
+ * 편철 표지 — 9행×N열 큰 표 (화면 미리보기용)
+ * - 한 페이지에 5개 열이 꽉 차도록 (A4 가로, 여백 1cm 기준 가용 폭 27.7cm에 맞춰 스케일)
  * - 바깥 테두리 3px, 안쪽 가로/세로 1px
  */
 
-// A4 세로(210mm) 기준: 21cm - 좌우 여백(1cm*2) = 19cm
-const INNER_PAGE_WIDTH_CM = 19;
+// A4 가로(297mm) 기준: 29.7cm - 좌우 여백(1cm*2) = 27.7cm
+const INNER_PAGE_WIDTH_CM = 27.7;
 const COLS_PER_PAGE = 5;
 
 function safeText(v) {

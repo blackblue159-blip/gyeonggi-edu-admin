@@ -240,7 +240,7 @@ function effectiveWidthCm(v) {
 
 function buildSpinePrintHtml(rows) {
   const pages = chunkRows(rows, 5);
-  const INNER_WIDTH_CM = 19; // A4 세로 폭 21cm - 여백 2cm
+  const INNER_WIDTH_CM = 27.7; // A4 가로 폭 29.7cm - 여백 2cm
 
   const cell = (inner, extraClass = "") => `<td class="cell ${extraClass}">${inner}</td>`;
   const row = (cells, extraClass = "") => `<tr class="${extraClass}">${cells.join("")}</tr>`;
@@ -303,11 +303,11 @@ function buildSpinePrintHtml(rows) {
     <title>편철 표지 인쇄</title>
     <style>
       @page {
-        size: 210mm 297mm portrait;
+        size: 297mm 210mm landscape;
         margin: 1cm;
       }
       html, body {
-        width: 210mm;
+        width: 297mm;
         margin: 0;
         padding: 0;
       }
@@ -317,15 +317,15 @@ function buildSpinePrintHtml(rows) {
         font-family: Pretendard, \"Malgun Gothic\", system-ui, sans-serif;
       }
       .page {
-        width: 190mm;
-        height: 277mm;
+        width: 277mm;
+        height: 190mm;
         display: flex;
         align-items: center;
         justify-content: center;
       }
       table {
         width: 100%;
-        height: 255mm;
+        height: 190mm;
         border-collapse: collapse;
         border: 3px solid #000;
         table-layout: fixed;
@@ -345,7 +345,8 @@ function buildSpinePrintHtml(rows) {
       }
       tr.h-label td.cell { height: 10mm; }
       tr.h-value td.cell { height: 12mm; }
-      tr.h-title td.cell { height: 167mm; padding: 0; }
+      /* 190mm - (라벨 4*10mm) - (값 4*12mm) = 102mm */
+      tr.h-title td.cell { height: 102mm; padding: 0; }
       .label { font-weight: 700; font-size: 10pt; }
       .value { font-size: 10pt; }
       .title {
@@ -467,7 +468,7 @@ export default function Archive() {
             print-color-adjust: exact;
           }
         }
-        @page { size: A4 portrait; margin: 12mm; }
+        @page { size: A4 landscape; margin: 12mm; }
         .print-labels-stack .label-page { page-break-after: always; }
         .print-labels-stack .label-page:last-child { page-break-after: auto; }
       `}</style>
