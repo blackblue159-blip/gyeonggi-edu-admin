@@ -98,6 +98,30 @@ export default function Tools() {
         </div>
 
         <div className="rounded-xl border border-[#e9e9e7] bg-white p-5 shadow-[0_1px_2px_rgba(15,15,15,0.04)]">
+          <h2 className="text-base font-semibold text-[#37352f]">지원 쇼핑몰</h2>
+          <ul className="mt-3 space-y-2 text-sm text-[#5c5b57]">
+            <li>
+              - <span className="font-medium text-[#37352f]">지마켓</span> ✅ <span className="text-[#787774]">(정상 작동)</span>
+            </li>
+            <li>
+              - <span className="font-medium text-[#37352f]">옥션</span> 🔶{" "}
+              <span className="text-[#787774]">(대부분 작동, 오류 있을 수 있음)</span>
+            </li>
+            <li>
+              - <span className="font-medium text-[#37352f]">11번가</span> 🔶{" "}
+              <span className="text-[#787774]">(대부분 작동, 오류 있을 수 있음)</span>
+            </li>
+          </ul>
+        </div>
+
+        <div className="rounded-xl border border-[#f4d38a] bg-[#fff7e6] p-5 shadow-[0_1px_2px_rgba(15,15,15,0.04)]">
+          <h2 className="text-base font-semibold text-[#7a4b00]">주의사항</h2>
+          <p className="mt-3 text-sm leading-relaxed text-[#7a4b00]">
+            ⚠️ 키워드가 포함된 유사 상품도 함께 체크될 수 있습니다. 반드시 선택 결과를 확인 후 주문하세요.
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-[#e9e9e7] bg-white p-5 shadow-[0_1px_2px_rgba(15,15,15,0.04)]">
           <h2 className="text-base font-semibold text-[#37352f]">사용 방법</h2>
           <ol className="mt-3 space-y-2 text-sm text-[#5c5b57]">
             <li>- 지마켓 장바구니 페이지를 엽니다.</li>
