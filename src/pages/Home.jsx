@@ -125,6 +125,15 @@ export default function Home() {
             cta="바로 가기"
           />
           <ToolCard
+            icon="🗂️"
+            title="보존문서"
+            description="보존문서관리대장 입력, 표지·보존상자 라벨(85mm) 인쇄, 지출증빙서 옆면 표지까지 한 페이지에서 처리합니다."
+            badges={["대장", "표지", "라벨", "지출증빙", "localStorage"]}
+            status="사용가능"
+            to="/archive"
+            cta="바로 가기"
+          />
+          <ToolCard
             icon="💳"
             title="카드 고지서 매칭"
             description="에듀파인 원인행위 목록과 카드 청구 내역을 대조합니다. 엑셀·CSV는 브라우저 안에서만 처리되며 서버로 전송되지 않습니다."

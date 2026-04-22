@@ -485,7 +485,7 @@ export default function Inventory() {
     // 1~4행: 상단 요약 정보 (현재 화면과 동일하게)
     const exportAt = new Date();
     ws.addRow(["물품대장 현재목록"]);
-    ws.mergeCells(1, 1, 1, 11);
+    ws.mergeCells(1, 1, 1, 10);
     ws.getRow(1).height = 28;
     ws.getCell("A1").font = { bold: true, size: 16, color: { argb: "FF111827" } };
     ws.getCell("A1").alignment = { vertical: "middle" };
@@ -512,7 +512,6 @@ export default function Inventory() {
       "사용연수",
       "내용연수만료일",
       "수리한계금액",
-      "기준",
     ];
 
     ws.columns = [
@@ -526,7 +525,6 @@ export default function Inventory() {
       { key: "used" },
       { key: "expiryDate" },
       { key: "limit" },
-      { key: "basis" },
     ];
 
     const headerRow = ws.addRow(headerLabels);
@@ -562,7 +560,6 @@ export default function Inventory() {
         used: Number.isFinite(it._usedYears) ? `${it._usedYears.toFixed(1)}년` : "",
         expiryDate: it._expiryDate ? formatYmd(it._expiryDate) : "",
         limit: it._repair && Number.isFinite(it._repair.value) ? Math.round(it._repair.value) : "",
-        basis: it._repair?.basis || "",
       });
       row.height = 18;
 
@@ -585,7 +582,7 @@ export default function Inventory() {
 
     // 테두리 + 컬럼 너비 자동 맞춤
     const tableEnd = ws.lastRow.number;
-    const colCount = 11;
+    const colCount = 10;
     for (let r = 1; r <= tableEnd; r++) {
       const row = ws.getRow(r);
       for (let c = 1; c <= colCount; c++) {
