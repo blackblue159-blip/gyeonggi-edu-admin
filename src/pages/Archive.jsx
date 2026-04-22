@@ -234,7 +234,9 @@ function chunkRows(rows, size) {
 }
 
 function effectiveWidthCm(v) {
-  const n = Number(v);
+  const s = String(v ?? "").trim();
+  // "1", "1.0", "1cm" 등도 허용
+  const n = Number.parseFloat(s.replaceAll(",", ""));
   return Number.isFinite(n) && n > 0 ? n : 3;
 }
 
@@ -439,6 +441,26 @@ export default function Archive() {
   }, []);
 
   const printExpense = useCallback(() => {
+    // 디버깅: widthCm 전달/계산 확인
+    try {
+      const page = expenseRows.slice(0, 5);
+      const parsed = page.map((r, idx) => ({
+        idx: idx + 1,
+        id: r.id,
+        title: r.title,
+        widthCm_raw: r.widthCm,
+        widthCm_parsed: effectiveWidthCm(r.widthCm),
+      }));
+      const sum = parsed.reduce((a, x) => a + x.widthCm_parsed, 0) || 1;
+      const withPct = parsed.map((x) => ({ ...x, widthPct: `${((x.widthCm_parsed / sum) * 100).toFixed(2)}%` }));
+      console.groupCollapsed("[편철 표지] 열 너비 계산(첫 페이지)");
+      console.table(withPct);
+      console.log("sumCm:", sum);
+      console.groupEnd();
+    } catch (e) {
+      console.warn("[편철 표지] 너비 계산 로그 실패", e);
+    }
+
     const w = window.open("", "_blank");
     if (!w) return;
     const html = buildSpinePrintHtml(expenseRows);
