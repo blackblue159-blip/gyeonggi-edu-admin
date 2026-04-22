@@ -240,16 +240,14 @@ function effectiveWidthCm(v) {
 
 function buildSpinePrintHtml(rows) {
   const pages = chunkRows(rows, 5);
-  const COLS = 5;
 
   const cell = (inner, extraClass = "") => `<td class="cell ${extraClass}">${inner}</td>`;
   const row = (cells, extraClass = "") => `<tr class="${extraClass}">${cells.join("")}</tr>`;
 
   const makeTable = (pageRows) => {
-    // 5열 고정 + 균등 분배 (입력 너비(cm) 무시)
-    const padded = [...pageRows];
-    while (padded.length < COLS) padded.push({ id: `__empty_${padded.length}` });
-    const colStyle = `width:${(100 / COLS).toFixed(6)}%;`;
+    // 입력한 너비(cm) 비율대로 열 너비 계산 (전체 표 너비는 100%)
+    const sumCm = pageRows.reduce((acc, r) => acc + effectiveWidthCm(r.widthCm), 0) || 1;
+    const colStyles = pageRows.map((r) => `width:${((effectiveWidthCm(r.widthCm) / sumCm) * 100).toFixed(6)}%;`);
 
     const v = (x) => escapeHtml(x || "\u00a0");
     const ymPeriod = (r) => {
@@ -261,7 +259,7 @@ function buildSpinePrintHtml(rows) {
     const serial = (r) => String(r.serialLabel ?? r.serial ?? r.no ?? "").trim() || "\u00a0";
 
     const mkCells = (render) =>
-      padded.map((r) => `<td class="cell" style="${colStyle}">${render(r)}</td>`);
+      pageRows.map((r, i) => `<td class="cell" style="${colStyles[i]}">${render(r)}</td>`);
 
     return `
       <table>
