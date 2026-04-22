@@ -26,6 +26,21 @@ function newId() {
   return crypto.randomUUID();
 }
 
+/** 1~2월: 전년도 회계, 3~12월: 당해 회계 */
+function defaultFiscalYearLabel(date = new Date()) {
+  const y = date.getFullYear();
+  const m = date.getMonth() + 1;
+  const fiscalYear = m <= 2 ? y - 1 : y;
+  return `${fiscalYear}회계`;
+}
+
+/** 오늘 기준 "2026년 4월" */
+function defaultYearMonthLabel(date = new Date()) {
+  const y = date.getFullYear();
+  const m = date.getMonth() + 1;
+  return `${y}년 ${m}월`;
+}
+
 function defaultLedgerRow() {
   return {
     id: newId(),
@@ -46,16 +61,16 @@ function defaultLedgerRow() {
   };
 }
 
-function defaultExpenseRow() {
+function defaultExpenseRow(date = new Date()) {
   return {
     id: newId(),
-    title: "학교회계지출증빙서",
-    fiscalYear: "2024회계",
-    yearMonth: "2024년 3월",
-    period: "~ 11일(553)",
-    serialLabel: "5책중1책",
-    orgName: "은가람중학교",
-    widthCm: 4,
+    title: "학교회계 지출증빙서",
+    fiscalYear: defaultFiscalYearLabel(date),
+    yearMonth: defaultYearMonthLabel(date),
+    period: "",
+    serialLabel: "",
+    orgName: "",
+    widthCm: 3.5,
   };
 }
 
@@ -63,7 +78,7 @@ function migrateExpenseRow(r) {
   if (!r || typeof r !== "object") return { ...defaultExpenseRow(), id: newId() };
   const id = typeof r.id === "string" ? r.id : newId();
   const widthCm = Number(r.widthCm);
-  const w = Number.isFinite(widthCm) && widthCm > 0 ? widthCm : 4;
+  const w = Number.isFinite(widthCm) && widthCm > 0 ? widthCm : 3.5;
 
   const needsLegacyMigration =
     !("yearMonth" in r) &&
@@ -117,15 +132,8 @@ function normalizeLedgerState(raw) {
 
 function normalizeExpenseState(raw) {
   if (!Array.isArray(raw) || raw.length === 0) {
-    return [
-      migrateExpenseRow({ ...defaultExpenseRow(), id: newId() }),
-      migrateExpenseRow({
-        ...defaultExpenseRow(),
-        id: newId(),
-        serialLabel: "5책중2책",
-        period: "11일(554) ~ 17일",
-      }),
-    ];
+    const today = new Date();
+    return Array.from({ length: 5 }, () => migrateExpenseRow(defaultExpenseRow(today)));
   }
   return raw.map((r) => migrateExpenseRow(r));
 }
@@ -240,7 +248,7 @@ function effectiveWidthCm(v) {
   const s = String(v ?? "").trim();
   // "1", "1.0", "1cm" 등도 허용
   const n = Number.parseFloat(s.replaceAll(",", ""));
-  return Number.isFinite(n) && n > 0 ? n : 4;
+  return Number.isFinite(n) && n > 0 ? n : 3.5;
 }
 
 function buildSpinePrintHtml(rows) {
@@ -498,7 +506,13 @@ export default function Archive() {
   }, []);
 
   const updateExpense = useCallback((id, patch) => {
-    setExpenseRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    setExpenseRows((prev) => {
+      if (patch.orgName !== undefined && prev[0]?.id === id) {
+        const v = patch.orgName;
+        return prev.map((r) => ({ ...r, orgName: v }));
+      }
+      return prev.map((r) => (r.id === id ? { ...r, ...patch } : r));
+    });
   }, []);
 
   const printCovers = useCallback(() => {
@@ -927,7 +941,7 @@ export default function Archive() {
                             value={row.title}
                             onChange={(e) => updateExpense(row.id, { title: e.target.value })}
                             onKeyDown={(e) => onSpineGridKeyDown(e, row, "title")}
-                            placeholder="학교회계지출증빙서"
+                            placeholder="학교회계 지출증빙서"
                             autoComplete="off"
                           />
                         </td>
@@ -938,7 +952,7 @@ export default function Archive() {
                             value={row.fiscalYear}
                             onChange={(e) => updateExpense(row.id, { fiscalYear: e.target.value })}
                             onKeyDown={(e) => onSpineGridKeyDown(e, row, "fiscalYear")}
-                            placeholder="2024회계"
+                            placeholder="예) 2026회계"
                             autoComplete="off"
                           />
                         </td>
@@ -949,7 +963,7 @@ export default function Archive() {
                             value={row.yearMonth}
                             onChange={(e) => updateExpense(row.id, { yearMonth: e.target.value })}
                             onKeyDown={(e) => onSpineGridKeyDown(e, row, "yearMonth")}
-                            placeholder="2024년 3월"
+                            placeholder="예) 2026년 4월"
                             autoComplete="off"
                           />
                         </td>
@@ -960,7 +974,7 @@ export default function Archive() {
                             value={row.period}
                             onChange={(e) => updateExpense(row.id, { period: e.target.value })}
                             onKeyDown={(e) => onSpineGridKeyDown(e, row, "period")}
-                            placeholder="~ 11일(553)"
+                            placeholder="예) 1일~14일"
                             autoComplete="off"
                           />
                         </td>
@@ -971,7 +985,7 @@ export default function Archive() {
                             value={row.serialLabel}
                             onChange={(e) => updateExpense(row.id, { serialLabel: e.target.value })}
                             onKeyDown={(e) => onSpineGridKeyDown(e, row, "serialLabel")}
-                            placeholder="5책중1책"
+                            placeholder="예) 5책중1책"
                             autoComplete="off"
                           />
                         </td>
@@ -982,7 +996,7 @@ export default function Archive() {
                             value={row.orgName}
                             onChange={(e) => updateExpense(row.id, { orgName: e.target.value })}
                             onKeyDown={(e) => onSpineGridKeyDown(e, row, "orgName")}
-                            placeholder="은가람중학교"
+                            placeholder="예) OO학교"
                             autoComplete="off"
                           />
                         </td>
@@ -997,7 +1011,7 @@ export default function Archive() {
                             onChange={(e) => {
                               const n = Number.parseFloat(e.target.value);
                               updateExpense(row.id, {
-                                widthCm: Number.isFinite(n) && n > 0 ? n : 4,
+                                widthCm: Number.isFinite(n) && n > 0 ? n : 3.5,
                               });
                             }}
                             onKeyDown={(e) => onSpineGridKeyDown(e, row, "widthCm")}
