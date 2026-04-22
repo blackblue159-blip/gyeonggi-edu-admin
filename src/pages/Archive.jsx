@@ -262,8 +262,16 @@ function buildSpinePrintHtml(rows) {
     };
     const serial = (r) => String(r.serialLabel ?? r.serial ?? r.no ?? "").trim() || "\u00a0";
 
-    const mkCells = (render) =>
-      pageRows.map((r, i) => `<td class="cell" style="${colStyles[i]}">${render(r)}</td>`);
+    const mkCells = (render) => {
+      const out = [];
+      pageRows.forEach((r, i) => {
+        out.push(`<td class="cell" style="${colStyles[i]}">${render(r)}</td>`);
+        if (i < pageRows.length - 1) {
+          out.push(`<td class="cell-gap"></td>`);
+        }
+      });
+      return out;
+    };
 
     return `
       <table>
@@ -346,19 +354,28 @@ function buildSpinePrintHtml(rows) {
         vertical-align: middle;
         padding: 0.5mm 1mm;
         box-sizing: border-box;
-        margin-right: 3mm;
       }
-      tr td.cell:last-child {
-        margin-right: 0;
+      td.cell-gap {
+        width: 4mm;
+        min-width: 4mm;
+        max-width: 4mm;
+        padding: 0;
+        border: none !important;
+        background: #fff;
+        vertical-align: middle;
       }
       tr.h-label td.cell { height: 10mm; }
       tr.h-value td.cell { height: 12mm; }
       /* 190mm - (라벨 4*10mm) - (값 4*12mm) = 102mm */
-      tr.h-title td.cell { height: 102mm; padding: 0; }
+      tr.h-title td.cell { height: 102mm; padding: 0; overflow: hidden; }
       .label { font-weight: 700; font-size: 10pt; }
       .value { font-size: 10pt; }
       .title {
+        box-sizing: border-box;
+        width: 100%;
         height: 100%;
+        max-width: 100%;
+        max-height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -376,9 +393,34 @@ function buildSpinePrintHtml(rows) {
   <body>
     ${body}
     <script>
-      window.onload = () => {
-        try { window.focus(); } catch {}
-        window.print();
+      function fitSpineTitles() {
+        var tol = 2;
+        document.querySelectorAll("tr.h-title td.cell .title").forEach(function (el) {
+          var cell = el.closest("td");
+          if (!cell) return;
+          var pt = 24;
+          var minPt = 7;
+          el.style.fontSize = pt + "pt";
+          function fits() {
+            return (
+              el.scrollHeight <= cell.clientHeight + tol &&
+              el.scrollWidth <= cell.clientWidth + tol
+            );
+          }
+          while (pt > minPt && !fits()) {
+            pt -= 0.25;
+            el.style.fontSize = pt + "pt";
+          }
+        });
+      }
+      window.onload = function () {
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            fitSpineTitles();
+            try { window.focus(); } catch (e) {}
+            window.print();
+          });
+        });
       };
     </script>
   </body>
