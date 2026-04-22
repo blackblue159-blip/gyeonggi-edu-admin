@@ -312,7 +312,6 @@ function buildSpinePrintHtml(rows) {
       html, body {
         width: 297mm;
         margin: 0;
-        padding: 0;
       }
       body {
         -webkit-print-color-adjust: exact;
@@ -322,14 +321,17 @@ function buildSpinePrintHtml(rows) {
       .page {
         width: 277mm;
         height: 190mm;
+        box-sizing: border-box;
+        padding-top: 5mm;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
       }
       table {
         width: auto;
-        height: 190mm;
-        border-collapse: collapse;
+        height: 185mm;
+        border-collapse: separate;
+        border-spacing: 3mm 0;
         border: 3px solid #000;
         table-layout: fixed;
         page-break-inside: avoid;
@@ -348,21 +350,28 @@ function buildSpinePrintHtml(rows) {
       }
       tr.h-label td.cell { height: 10mm; }
       tr.h-value td.cell { height: 12mm; }
-      /* 190mm - (라벨 4*10mm) - (값 4*12mm) = 102mm */
-      tr.h-title td.cell { height: 102mm; padding: 0; }
-      .label { font-weight: 700; font-size: 10pt; }
-      .value { font-size: 10pt; }
-      .title {
-        height: 100%;
+      /* 185mm - (라벨 4*10mm) - (값 4*12mm) = 97mm (.page 상단 padding 5mm 반영, 표 높이 185mm) */
+      tr.h-title td.cell {
+        height: 97mm;
+        padding: 0;
+        vertical-align: middle;
+        text-align: center;
         display: flex;
         align-items: center;
         justify-content: center;
+      }
+      .label { font-weight: 700; font-size: 10pt; }
+      .value { font-size: 10pt; }
+      .title {
         writing-mode: vertical-rl;
         text-orientation: mixed;
         font-weight: 800;
         font-size: 24pt;
         line-height: 1.1;
+        letter-spacing: 0.3em;
+        text-align: center;
         overflow: hidden;
+        max-height: 100%;
       }
     </style>
   </head>

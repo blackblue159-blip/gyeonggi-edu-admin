@@ -55,18 +55,27 @@ export function SpineTable({ rows }) {
   return (
     <>
       <style>{`
-        .spine-sheet-table { table-layout: fixed; width: auto; }
+        .spine-sheet-table { table-layout: fixed; width: auto; border-collapse: separate; border-spacing: 3mm 0; }
         .spine-sheet-table .spine-row-label { height: 36px; }
         .spine-sheet-table .spine-row-value { height: 40px; }
         .spine-sheet-table .spine-row-title { height: 200px; }
+        .spine-sheet-table .spine-row-title td {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          vertical-align: middle;
+          text-align: center;
+        }
         .spine-sheet-table .spine-title-inner {
           min-height: 160px;
           font-size: 30px;
           line-height: 1.1;
+          letter-spacing: 0.3em;
+          text-align: center;
         }
       `}</style>
       <table
-        className="spine-sheet-table border-collapse bg-white"
+        className="spine-sheet-table border-separate bg-white"
         style={{
           border: "3px solid black",
         }}
@@ -118,7 +127,7 @@ export function SpineTable({ rows }) {
             {rows.map((r, i) => (
               <Cell key={r.id ?? i} style={colStyles[i]} className="p-0">
                 <div
-                  className="spine-title-inner flex h-full w-full items-center justify-center font-bold"
+                  className="spine-title-inner flex max-h-full w-full items-center justify-center font-bold"
                   style={{
                     writingMode: "vertical-rl",
                     textOrientation: "mixed",
