@@ -247,9 +247,11 @@ function buildSpinePrintHtml(rows) {
   const row = (cells, extraClass = "") => `<tr class="${extraClass}">${cells.join("")}</tr>`;
 
   const makeTable = (pageRows) => {
-    // 입력한 너비(cm) 비율대로 열 너비 계산 (전체 표 너비는 100%)
-    const sumCm = pageRows.reduce((acc, r) => acc + effectiveWidthCm(r.widthCm), 0) || 1;
-    const colStyles = pageRows.map((r) => `width:${((effectiveWidthCm(r.widthCm) / sumCm) * 100).toFixed(6)}%;`);
+    // 입력한 너비(cm) = 인쇄 시 물리적 열 너비(표 전체 너비 = 열 너비 합, 100%로 늘리지 않음)
+    const colStyles = pageRows.map((r) => {
+      const w = effectiveWidthCm(r.widthCm);
+      return `width:${w}cm;min-width:${w}cm;max-width:${w}cm;`;
+    });
 
     const v = (x) => escapeHtml(x || "\u00a0");
     const ymPeriod = (r) => {
@@ -325,7 +327,7 @@ function buildSpinePrintHtml(rows) {
         justify-content: center;
       }
       table {
-        width: 100%;
+        width: auto;
         height: 190mm;
         border-collapse: collapse;
         border: 3px solid #000;
@@ -441,26 +443,6 @@ export default function Archive() {
   }, []);
 
   const printExpense = useCallback(() => {
-    // 디버깅: widthCm 전달/계산 확인
-    try {
-      const page = expenseRows.slice(0, 5);
-      const parsed = page.map((r, idx) => ({
-        idx: idx + 1,
-        id: r.id,
-        title: r.title,
-        widthCm_raw: r.widthCm,
-        widthCm_parsed: effectiveWidthCm(r.widthCm),
-      }));
-      const sum = parsed.reduce((a, x) => a + x.widthCm_parsed, 0) || 1;
-      const withPct = parsed.map((x) => ({ ...x, widthPct: `${((x.widthCm_parsed / sum) * 100).toFixed(2)}%` }));
-      console.groupCollapsed("[편철 표지] 열 너비 계산(첫 페이지)");
-      console.table(withPct);
-      console.log("sumCm:", sum);
-      console.groupEnd();
-    } catch (e) {
-      console.warn("[편철 표지] 너비 계산 로그 실패", e);
-    }
-
     const w = window.open("", "_blank");
     if (!w) return;
     const html = buildSpinePrintHtml(expenseRows);

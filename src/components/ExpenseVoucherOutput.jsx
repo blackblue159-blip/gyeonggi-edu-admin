@@ -1,11 +1,9 @@
 /**
  * 편철 표지 — 9행×N열 큰 표 (화면 미리보기용)
- * - 한 페이지에 5개 열이 꽉 차도록 (A4 가로, 여백 1cm 기준 가용 폭 27.7cm에 맞춰 스케일)
+ * - 열 너비: 입력한 widthCm를 물리적 cm 그대로 사용 (표 너비 = 열 너비 합)
  * - 바깥 테두리 3px, 안쪽 가로/세로 1px
  */
 
-// A4 가로(297mm) 기준: 29.7cm - 좌우 여백(1cm*2) = 27.7cm
-const INNER_PAGE_WIDTH_CM = 27.7;
 const COLS_PER_PAGE = 5;
 
 function safeText(v) {
@@ -14,9 +12,9 @@ function safeText(v) {
 }
 
 export function effectiveWidthCm(row) {
-  const w = Number(row?.widthCm);
-  if (!Number.isFinite(w) || w <= 0) return 3;
-  return w;
+  const s = String(row?.widthCm ?? "").trim();
+  const n = Number.parseFloat(s.replaceAll(",", ""));
+  return Number.isFinite(n) && n > 0 ? n : 3;
 }
 
 /** @param {any[]} rows */
@@ -26,12 +24,6 @@ export function buildSpinePages(rows) {
     out.push(rows.slice(i, i + COLS_PER_PAGE));
   }
   return out.length ? out : [[]];
-}
-
-function computeScale(pageRows) {
-  const sum = pageRows.reduce((acc, r) => acc + effectiveWidthCm(r), 0);
-  if (!Number.isFinite(sum) || sum <= 0) return 1;
-  return INNER_PAGE_WIDTH_CM / sum;
 }
 
 function Cell({ children, className = "", style }) {
@@ -55,17 +47,15 @@ function ValueText({ children }) {
 
 /** @param {{ rows: any[] }} props */
 export function SpineTable({ rows }) {
-  const scale = computeScale(rows);
-  const colStyles = rows.map((r) => ({
-    width: `${effectiveWidthCm(r) * scale}cm`,
-    minWidth: `${effectiveWidthCm(r) * scale}cm`,
-    maxWidth: `${effectiveWidthCm(r) * scale}cm`,
-  }));
+  const colStyles = rows.map((r) => {
+    const w = `${effectiveWidthCm(r)}cm`;
+    return { width: w, minWidth: w, maxWidth: w };
+  });
 
   return (
     <>
       <style>{`
-        .spine-sheet-table { table-layout: fixed; }
+        .spine-sheet-table { table-layout: fixed; width: auto; }
         .spine-sheet-table .spine-row-label { height: 36px; }
         .spine-sheet-table .spine-row-value { height: 40px; }
         .spine-sheet-table .spine-row-title { height: 200px; }
