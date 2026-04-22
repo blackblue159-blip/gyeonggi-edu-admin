@@ -257,12 +257,6 @@ function buildSpinePrintHtml(rows) {
     });
 
     const v = (x) => escapeHtml(x || "\u00a0");
-    const ymPeriod = (r) => {
-      const a = String(r.yearMonth ?? "").trim();
-      const b = String(r.period ?? "").trim();
-      const out = `${a} ${b}`.trim();
-      return out || "\u00a0";
-    };
     const serial = (r) => String(r.serialLabel ?? r.serial ?? r.no ?? "").trim() || "\u00a0";
 
     const mkCells = (render) => {
@@ -282,7 +276,8 @@ function buildSpinePrintHtml(rows) {
           ${row(mkCells(() => `<div class="label">회계연도</div>`), "h-label")}
           ${row(mkCells((r) => `<div class="value">${v(r.fiscalYear)}</div>`), "h-value")}
           ${row(mkCells(() => `<div class="label">연월</div>`), "h-label")}
-          ${row(mkCells((r) => `<div class="value">${v(ymPeriod(r))}</div>`), "h-value")}
+          ${row(mkCells((r) => `<div class="value">${v(String(r.yearMonth ?? "").trim())}</div>`), "h-value")}
+          ${row(mkCells((r) => `<div class="value">${v(String(r.period ?? "").trim())}</div>`), "h-value")}
           ${row(mkCells(() => `<div class="label">일련번호</div>`), "h-label")}
           ${row(mkCells((r) => `<div class="value">${v(serial(r))}</div>`), "h-value")}
           ${row(
@@ -377,11 +372,11 @@ function buildSpinePrintHtml(rows) {
         background: #fff;
         vertical-align: middle;
       }
-      /* 제목 행 +20% → 라벨/값 행 비율 축소, 합계 190mm 유지 */
+      /* 라벨 4 + 값 5 + 제목 1 = 10행, 합계 190mm */
       tr.h-label td.cell { height: 7.68mm; }
       tr.h-value td.cell { height: 9.22mm; }
-      /* 4*7.68 + 4*9.22 + 122.4 = 190mm */
-      tr.h-title td.cell { height: 122.4mm; padding: 0; overflow: hidden; }
+      /* 4*7.68 + 5*9.22 + 113.18 = 190mm */
+      tr.h-title td.cell { height: 113.18mm; padding: 0; overflow: hidden; }
       .label { font-weight: 700; font-size: 10pt; }
       .value { font-size: 10pt; }
       .title {
@@ -594,8 +589,8 @@ export default function Archive() {
             vertical-align: middle !important;
           }
           body.archive-printing-expense table.spine-sheet-table tr.spine-row-title td {
-            height: 122.4mm !important;
-            max-height: 122.4mm !important;
+            height: 113.18mm !important;
+            max-height: 113.18mm !important;
             padding: 0 !important;
             vertical-align: middle !important;
           }
@@ -1038,7 +1033,7 @@ export default function Archive() {
             <div className="rounded-xl border border-[#e9e9e7] bg-[#fbfbfa] p-4 sm:p-5">
               <h3 className="text-sm font-semibold text-[#37352f]">미리보기</h3>
               <p className="mt-1 text-xs text-[#787774]">
-                원본 엑셀과 동일한 9행 구조이며, 5개 열씩 한 페이지에 맞춰집니다. (표지가 6개 이상이면 다음 페이지로 이어집니다.)
+                연월·기간이 분리된 10행 구조이며, 5개 열씩 한 페이지에 맞춰집니다. (표지가 6개 이상이면 다음 페이지로 이어집니다.)
               </p>
               <div className="mt-4 rounded-lg border border-[#e9e9e7] bg-white p-4 sm:p-6">
                 <div className="overflow-x-auto">

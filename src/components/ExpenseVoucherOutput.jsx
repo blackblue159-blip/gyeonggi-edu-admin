@@ -1,5 +1,5 @@
 /**
- * 편철 표지 — 9행×N열 큰 표 (화면 미리보기용)
+ * 편철 표지 — 10행×N열 큰 표 (화면 미리보기용)
  * - 열 너비: 입력한 widthCm를 물리적 cm 그대로 사용 (표 너비 = 열 너비 합)
  * - 바깥 테두리 3px, 안쪽 가로/세로 1px
  */
@@ -149,10 +149,10 @@ export function SpineTable({ rows }) {
         .spine-sheet-table tbody tr:last-child td:not(.spine-col-gap) {
           border-bottom: 3px solid #000 !important;
         }
-        /* 인쇄와 동일 비율: 라벨/값 축소, 제목 +20% (합계 높이 스케일 유지) */
+        /* 인쇄와 동일 비율: 라벨 4 + 값 5 + 제목 (합계 504px 스케일) */
         .spine-sheet-table .spine-row-label { height: 31.26px; }
         .spine-sheet-table .spine-row-value { height: 34.74px; }
-        .spine-sheet-table .spine-row-title { height: 240px; }
+        .spine-sheet-table .spine-row-title { height: 205.26px; }
         .spine-sheet-table .spine-title-cell { overflow: hidden; }
         .spine-sheet-table .spine-title-inner {
           min-height: 0;
@@ -189,7 +189,14 @@ export function SpineTable({ rows }) {
             <tr className="spine-row spine-row-value">
               {withGaps(rows, colStyles, (r, i, style) => (
                 <Cell key={`${r.id ?? i}-ymv`} style={style}>
-                  <ValueText>{safeText(`${String(r.yearMonth ?? "").trim()} ${String(r.period ?? "").trim()}`.trim())}</ValueText>
+                  <ValueText>{safeText(r.yearMonth)}</ValueText>
+                </Cell>
+              ))}
+            </tr>
+            <tr className="spine-row spine-row-value">
+              {withGaps(rows, colStyles, (r, i, style) => (
+                <Cell key={`${r.id ?? i}-period`} style={style}>
+                  <ValueText>{safeText(r.period)}</ValueText>
                 </Cell>
               ))}
             </tr>
