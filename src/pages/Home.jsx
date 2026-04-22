@@ -126,9 +126,9 @@ export default function Home() {
           />
           <ToolCard
             icon="🗂️"
-            title="보존문서"
-            description="보존문서관리대장 입력, 표지·보존상자 라벨(85mm) 인쇄, 지출증빙서 옆면 표지까지 한 페이지에서 처리합니다."
-            badges={["대장", "표지", "라벨", "지출증빙", "localStorage"]}
+            title="편철 표지"
+            description="엑셀처럼 한 줄에 하나씩 입력하고, 10행 구조 편철 옆면 표지를 미리보기·인쇄합니다. 데이터는 이 기기의 localStorage에만 저장됩니다."
+            badges={["인라인 입력", "미리보기", "인쇄", "localStorage"]}
             status="사용가능"
             to="/archive"
             cta="바로 가기"

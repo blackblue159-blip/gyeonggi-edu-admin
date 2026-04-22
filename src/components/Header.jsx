@@ -29,7 +29,7 @@ export function Header() {
             물품대장
           </NavLink>
           <NavLink to="/archive" className={navCls}>
-            보존문서
+            편철 표지
           </NavLink>
           <NavLink to="/school-info" className={navCls}>
             학교 정보
