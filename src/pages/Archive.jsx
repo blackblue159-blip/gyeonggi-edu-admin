@@ -4,6 +4,9 @@ import { SpineTableDocument } from "../components/ExpenseVoucherOutput.jsx";
 const STORAGE_LEDGER = "gyeonggi.archive.ledger.v1";
 const STORAGE_EXPENSE = "gyeonggi.archive.expense.v1";
 
+const SPINE_GRID_INPUT_CLASS =
+  "w-full min-w-0 border-0 bg-transparent px-2.5 py-2 text-[13px] text-[#37352f] outline-none transition placeholder:text-[#c4c4c0] focus:bg-[#f7f6f3] focus:ring-2 focus:ring-inset focus:ring-[#2383e2]/25";
+
 /** @type {string[]} 단위과제 시트 기반 입력 힌트 */
 const UNIT_TASK_SUGGESTIONS = [
   "개인정보보호",
@@ -52,7 +55,7 @@ function defaultExpenseRow() {
     period: "~ 11일(553)",
     serialLabel: "5책중1책",
     orgName: "은가람중학교",
-    widthCm: 3,
+    widthCm: 4,
   };
 }
 
@@ -60,7 +63,7 @@ function migrateExpenseRow(r) {
   if (!r || typeof r !== "object") return { ...defaultExpenseRow(), id: newId() };
   const id = typeof r.id === "string" ? r.id : newId();
   const widthCm = Number(r.widthCm);
-  const w = Number.isFinite(widthCm) && widthCm > 0 ? widthCm : 3;
+  const w = Number.isFinite(widthCm) && widthCm > 0 ? widthCm : 4;
 
   const needsLegacyMigration =
     !("yearMonth" in r) &&
@@ -237,7 +240,7 @@ function effectiveWidthCm(v) {
   const s = String(v ?? "").trim();
   // "1", "1.0", "1cm" 등도 허용
   const n = Number.parseFloat(s.replaceAll(",", ""));
-  return Number.isFinite(n) && n > 0 ? n : 3;
+  return Number.isFinite(n) && n > 0 ? n : 4;
 }
 
 function buildSpinePrintHtml(rows) {
@@ -466,8 +469,34 @@ export default function Archive() {
   }, []);
 
   const addExpenseRow = useCallback(() => {
-    setExpenseRows((prev) => [...prev, { ...defaultExpenseRow(), id: newId(), serialLabel: "", period: "" }]);
+    setExpenseRows((prev) => [...prev, defaultExpenseRow()]);
   }, []);
+
+  const focusSpineGridCell = useCallback((rowId, field) => {
+    const el = document.getElementById(`spine-grid-${rowId}-${field}`);
+    if (el && "focus" in el) {
+      el.focus();
+      if (typeof el.select === "function") el.select();
+    }
+  }, []);
+
+  const onSpineGridKeyDown = useCallback(
+    (e, row, field) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      const idx = expenseRows.findIndex((r) => r.id === row.id);
+      if (idx < 0) return;
+      if (idx < expenseRows.length - 1) {
+        const nextId = expenseRows[idx + 1].id;
+        queueMicrotask(() => focusSpineGridCell(nextId, field));
+      } else {
+        const nr = defaultExpenseRow();
+        setExpenseRows((prev) => [...prev, nr]);
+        queueMicrotask(() => focusSpineGridCell(nr.id, field));
+      }
+    },
+    [expenseRows, focusSpineGridCell]
+  );
 
   const removeExpenseRow = useCallback((id) => {
     setExpenseRows((prev) => (prev.length <= 1 ? prev : prev.filter((r) => r.id !== id)));
@@ -834,18 +863,11 @@ export default function Archive() {
               <div>
                 <h2 className="text-base font-semibold text-[#37352f]">편철 옆면 표지</h2>
                 <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[#787774]">
-                  문서 편철 시 옆면에 붙이는 표지를 만듭니다. 카드마다 너비(cm)를 정할 수 있고, 미리보기는 가로로 배치되며 한 줄에
-                  들어가지 않으면 자동으로 다음 줄로 넘어갑니다. 인쇄는 A4 가로·여백 1cm입니다.
+                  엑셀 기초자료처럼 한 줄에 표지 하나씩 입력합니다. 셀을 눌러 바로 수정하고, Tab으로 옆 셀, Enter로 같은 열의 다음 행으로
+                  이동합니다. 인쇄는 A4 가로·여백 1cm입니다.
                 </p>
               </div>
               <div className="no-print flex shrink-0 flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={addExpenseRow}
-                  className="rounded-md border border-[#e9e9e7] bg-white px-3 py-2 text-xs font-medium text-[#37352f] shadow-sm transition hover:bg-[#f7f6f3]"
-                >
-                  표지 추가
-                </button>
                 <button
                   type="button"
                   onClick={printExpense}
@@ -856,92 +878,161 @@ export default function Archive() {
               </div>
             </div>
 
-            <div className="space-y-4">
-              {expenseRows.map((row, idx) => (
-                <div
-                  key={row.id}
-                  className="rounded-xl border border-[#e9e9e7] bg-white p-4 shadow-[0_1px_2px_rgba(15,15,15,0.04)] sm:p-5"
+            <div className="overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-[0_1px_2px_rgba(15,15,15,0.04)]">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[920px] border-collapse text-left">
+                  <thead>
+                    <tr className="border-b border-[#e9e9e7] bg-[#f7f6f3]">
+                      <th className="w-11 whitespace-nowrap px-2 py-2.5 text-center text-[11px] font-semibold text-[#787774]">
+                        번호
+                      </th>
+                      <th className="min-w-[140px] whitespace-nowrap px-2 py-2.5 text-[11px] font-semibold text-[#787774]">
+                        제목
+                      </th>
+                      <th className="min-w-[88px] whitespace-nowrap px-2 py-2.5 text-[11px] font-semibold text-[#787774]">
+                        회계연도
+                      </th>
+                      <th className="min-w-[100px] whitespace-nowrap px-2 py-2.5 text-[11px] font-semibold text-[#787774]">
+                        연월
+                      </th>
+                      <th className="min-w-[120px] whitespace-nowrap px-2 py-2.5 text-[11px] font-semibold text-[#787774]">
+                        기간
+                      </th>
+                      <th className="min-w-[100px] whitespace-nowrap px-2 py-2.5 text-[11px] font-semibold text-[#787774]">
+                        일련번호
+                      </th>
+                      <th className="min-w-[100px] whitespace-nowrap px-2 py-2.5 text-[11px] font-semibold text-[#787774]">
+                        기관명
+                      </th>
+                      <th className="w-20 whitespace-nowrap px-2 py-2.5 text-[11px] font-semibold text-[#787774]">
+                        너비(cm)
+                      </th>
+                      <th className="w-[72px] whitespace-nowrap px-2 py-2.5 text-center text-[11px] font-semibold text-[#787774]">
+                        삭제
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {expenseRows.map((row, idx) => (
+                      <tr
+                        key={row.id}
+                        className="border-b border-[#f0f0ef] transition-colors last:border-b-0 hover:bg-[#fbfbfa]/90"
+                      >
+                        <td
+                          className="select-none px-2 py-0 text-center text-xs tabular-nums text-[#9b9a97]"
+                          tabIndex={-1}
+                          aria-label={`행 ${idx + 1}`}
+                        >
+                          {idx + 1}
+                        </td>
+                        <td className="p-0 align-middle">
+                          <input
+                            id={`spine-grid-${row.id}-title`}
+                            className={SPINE_GRID_INPUT_CLASS}
+                            value={row.title}
+                            onChange={(e) => updateExpense(row.id, { title: e.target.value })}
+                            onKeyDown={(e) => onSpineGridKeyDown(e, row, "title")}
+                            placeholder="학교회계지출증빙서"
+                            autoComplete="off"
+                          />
+                        </td>
+                        <td className="p-0 align-middle">
+                          <input
+                            id={`spine-grid-${row.id}-fiscalYear`}
+                            className={SPINE_GRID_INPUT_CLASS}
+                            value={row.fiscalYear}
+                            onChange={(e) => updateExpense(row.id, { fiscalYear: e.target.value })}
+                            onKeyDown={(e) => onSpineGridKeyDown(e, row, "fiscalYear")}
+                            placeholder="2024회계"
+                            autoComplete="off"
+                          />
+                        </td>
+                        <td className="p-0 align-middle">
+                          <input
+                            id={`spine-grid-${row.id}-yearMonth`}
+                            className={SPINE_GRID_INPUT_CLASS}
+                            value={row.yearMonth}
+                            onChange={(e) => updateExpense(row.id, { yearMonth: e.target.value })}
+                            onKeyDown={(e) => onSpineGridKeyDown(e, row, "yearMonth")}
+                            placeholder="2024년 3월"
+                            autoComplete="off"
+                          />
+                        </td>
+                        <td className="p-0 align-middle">
+                          <input
+                            id={`spine-grid-${row.id}-period`}
+                            className={SPINE_GRID_INPUT_CLASS}
+                            value={row.period}
+                            onChange={(e) => updateExpense(row.id, { period: e.target.value })}
+                            onKeyDown={(e) => onSpineGridKeyDown(e, row, "period")}
+                            placeholder="~ 11일(553)"
+                            autoComplete="off"
+                          />
+                        </td>
+                        <td className="p-0 align-middle">
+                          <input
+                            id={`spine-grid-${row.id}-serialLabel`}
+                            className={SPINE_GRID_INPUT_CLASS}
+                            value={row.serialLabel}
+                            onChange={(e) => updateExpense(row.id, { serialLabel: e.target.value })}
+                            onKeyDown={(e) => onSpineGridKeyDown(e, row, "serialLabel")}
+                            placeholder="5책중1책"
+                            autoComplete="off"
+                          />
+                        </td>
+                        <td className="p-0 align-middle">
+                          <input
+                            id={`spine-grid-${row.id}-orgName`}
+                            className={SPINE_GRID_INPUT_CLASS}
+                            value={row.orgName}
+                            onChange={(e) => updateExpense(row.id, { orgName: e.target.value })}
+                            onKeyDown={(e) => onSpineGridKeyDown(e, row, "orgName")}
+                            placeholder="은가람중학교"
+                            autoComplete="off"
+                          />
+                        </td>
+                        <td className="p-0 align-middle">
+                          <input
+                            id={`spine-grid-${row.id}-widthCm`}
+                            type="number"
+                            step="0.1"
+                            min="0.1"
+                            className={`${SPINE_GRID_INPUT_CLASS} tabular-nums`}
+                            value={row.widthCm}
+                            onChange={(e) => {
+                              const n = Number.parseFloat(e.target.value);
+                              updateExpense(row.id, {
+                                widthCm: Number.isFinite(n) && n > 0 ? n : 4,
+                              });
+                            }}
+                            onKeyDown={(e) => onSpineGridKeyDown(e, row, "widthCm")}
+                            autoComplete="off"
+                          />
+                        </td>
+                        <td className="px-1 py-1 text-center align-middle">
+                          <button
+                            type="button"
+                            tabIndex={-1}
+                            onClick={() => removeExpenseRow(row.id)}
+                            className="rounded border border-[#e9e9e7] bg-white px-2 py-1 text-[10px] font-medium text-[#787774] transition hover:border-[#fecaca] hover:bg-[#fff5f5] hover:text-[#b91c1c]"
+                          >
+                            삭제
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="border-t border-[#e9e9e7] bg-[#fbfbfa] px-2 py-2">
+                <button
+                  type="button"
+                  onClick={addExpenseRow}
+                  className="rounded-md border border-dashed border-[#d3d2cd] bg-white px-3 py-2 text-xs font-medium text-[#5c5b57] transition hover:border-[#2383e2]/40 hover:bg-[#f7f6f3] hover:text-[#37352f]"
                 >
-                  <div className="mb-4 flex items-center justify-between gap-2 border-b border-[#f0f0ef] pb-3">
-                    <span className="text-[12px] font-semibold text-[#37352f]">표지 {idx + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeExpenseRow(row.id)}
-                      className="rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-2.5 py-1 text-[11px] font-medium text-[#787774] transition hover:border-[#fecaca] hover:bg-[#fff5f5] hover:text-[#b91c1c]"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-1 sm:col-span-2">
-                      <label className="block text-[11px] font-medium text-[#787774]">제목</label>
-                      <input
-                        value={row.title}
-                        onChange={(e) => updateExpense(row.id, { title: e.target.value })}
-                        className="w-full rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-2 text-[13px] text-[#37352f] shadow-inner outline-none transition focus:border-[#2383e2] focus:bg-white focus:ring-2 focus:ring-[#2383e2]/20"
-                        placeholder="학교회계지출증빙서"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block text-[11px] font-medium text-[#787774]">회계연도</label>
-                      <input
-                        value={row.fiscalYear}
-                        onChange={(e) => updateExpense(row.id, { fiscalYear: e.target.value })}
-                        className="w-full rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-2 text-[13px] text-[#37352f] outline-none transition focus:border-[#2383e2] focus:bg-white focus:ring-2 focus:ring-[#2383e2]/20"
-                        placeholder="2024회계"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block text-[11px] font-medium text-[#787774]">연월</label>
-                      <input
-                        value={row.yearMonth}
-                        onChange={(e) => updateExpense(row.id, { yearMonth: e.target.value })}
-                        className="w-full rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-2 text-[13px] text-[#37352f] outline-none transition focus:border-[#2383e2] focus:bg-white focus:ring-2 focus:ring-[#2383e2]/20"
-                        placeholder="2024년 3월"
-                      />
-                    </div>
-                    <div className="space-y-1 sm:col-span-2">
-                      <label className="block text-[11px] font-medium text-[#787774]">기간</label>
-                      <input
-                        value={row.period}
-                        onChange={(e) => updateExpense(row.id, { period: e.target.value })}
-                        className="w-full rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-2 text-[13px] text-[#37352f] outline-none transition focus:border-[#2383e2] focus:bg-white focus:ring-2 focus:ring-[#2383e2]/20"
-                        placeholder="~ 11일(553)"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block text-[11px] font-medium text-[#787774]">일련번호</label>
-                      <input
-                        value={row.serialLabel}
-                        onChange={(e) => updateExpense(row.id, { serialLabel: e.target.value })}
-                        className="w-full rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-2 text-[13px] text-[#37352f] outline-none transition focus:border-[#2383e2] focus:bg-white focus:ring-2 focus:ring-[#2383e2]/20"
-                        placeholder="5책중1책"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block text-[11px] font-medium text-[#787774]">기관명</label>
-                      <input
-                        value={row.orgName}
-                        onChange={(e) => updateExpense(row.id, { orgName: e.target.value })}
-                        className="w-full rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-2 text-[13px] text-[#37352f] outline-none transition focus:border-[#2383e2] focus:bg-white focus:ring-2 focus:ring-[#2383e2]/20"
-                        placeholder="은가람중학교"
-                      />
-                    </div>
-                    <div className="space-y-1 sm:col-span-2">
-                      <label className="block text-[11px] font-medium text-[#787774]">너비 (cm)</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        min="0.5"
-                        value={row.widthCm}
-                        onChange={(e) => updateExpense(row.id, { widthCm: Number(e.target.value) || 3 })}
-                        className="w-full max-w-[8rem] rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-2 text-[13px] text-[#37352f] outline-none transition focus:border-[#2383e2] focus:bg-white focus:ring-2 focus:ring-[#2383e2]/20"
-                      />
-                      <p className="text-[10px] text-[#9b9a97]">기본 3cm. 편철 두께에 맞게 조정하세요.</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                  + 행 추가
+                </button>
+              </div>
             </div>
 
             <div className="rounded-xl border border-[#e9e9e7] bg-[#fbfbfa] p-4 sm:p-5">

@@ -79,7 +79,7 @@ function safeText(v) {
 export function effectiveWidthCm(row) {
   const s = String(row?.widthCm ?? "").trim();
   const n = Number.parseFloat(s.replaceAll(",", ""));
-  return Number.isFinite(n) && n > 0 ? n : 3;
+  return Number.isFinite(n) && n > 0 ? n : 4;
 }
 
 /** @param {any[]} rows */
