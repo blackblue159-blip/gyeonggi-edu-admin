@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BinderSpineGrid } from "../components/ExpenseVoucherOutput.jsx";
+import { SpineTableDocument } from "../components/ExpenseVoucherOutput.jsx";
 
 const STORAGE_LEDGER = "gyeonggi.archive.ledger.v1";
 const STORAGE_EXPENSE = "gyeonggi.archive.expense.v1";
@@ -320,7 +320,7 @@ export default function Archive() {
         @page { size: A4; margin: 12mm; }
         .print-labels-stack .label-page { page-break-after: always; }
         .print-labels-stack .label-page:last-child { page-break-after: auto; }
-        .binder-spine-card { break-inside: avoid; page-break-inside: avoid; }
+        .spine-doc-print table { break-inside: avoid; page-break-inside: avoid; }
       `}</style>
 
       <div className="screen-root">
@@ -686,10 +686,12 @@ export default function Archive() {
             <div className="rounded-xl border border-[#e9e9e7] bg-[#fbfbfa] p-4 sm:p-5">
               <h3 className="text-sm font-semibold text-[#37352f]">미리보기</h3>
               <p className="mt-1 text-xs text-[#787774]">
-                인쇄 시에도 동일한 배치이며, 가용 폭을 넘기면 다음 줄로 이어집니다.
+                원본 엑셀과 동일한 9행 구조이며, 5개 열씩 한 페이지에 맞춰집니다. (표지가 6개 이상이면 다음 페이지로 이어집니다.)
               </p>
               <div className="mt-4 rounded-lg border border-[#e9e9e7] bg-white p-4 sm:p-6">
-                <BinderSpineGrid rows={expenseRows} forPrint={false} />
+                <div className="overflow-x-auto">
+                  <SpineTableDocument rows={expenseRows} forPrint={false} />
+                </div>
               </div>
             </div>
           </section>
@@ -715,8 +717,8 @@ export default function Archive() {
       </div>
 
       <div className="archive-print-bundle print-expense">
-        <div className="flex min-h-[calc(210mm-20mm)] w-full items-center justify-center print:min-h-[190mm]">
-          <BinderSpineGrid rows={expenseRows} forPrint />
+        <div className="spine-doc-print">
+          <SpineTableDocument rows={expenseRows} forPrint />
         </div>
       </div>
     </main>

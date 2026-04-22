@@ -1,73 +1,181 @@
 /**
- * 편철 옆면 표지 — 웹 전용 레이아웃
- * 카드를 가로로 나열하고, 한 줄에 들어가지 않으면 flex-wrap으로 다음 줄로 배치합니다.
+ * 편철 표지 — 원본 엑셀과 동일한 9행×N열 “큰 표” 출력물
+ * - 한 페이지에 5개 열이 꽉 차도록 (A4 가로, 여백 1cm 기준 가용 폭 27.7cm에 맞춰 스케일)
+ * - 바깥 테두리 3px, 안쪽 가로/세로 1px
+ * - 제목(7행): 세로, 큰 글씨, 굵게, 높이 최소 200px
  */
 
-export function effectiveBinderWidthCm(row) {
+const INNER_PAGE_WIDTH_CM = 27.7; // 29.7cm - 1cm*2 (좌우 여백)
+const COLS_PER_PAGE = 5;
+
+function safeText(v) {
+  const s = String(v ?? "").trim();
+  return s || "\u00a0";
+}
+
+export function effectiveWidthCm(row) {
   const w = Number(row?.widthCm);
   if (!Number.isFinite(w) || w <= 0) return 3;
   return w;
 }
 
-function MetaBlock({ label, value }) {
-  const v = String(value ?? "").trim();
+/** @param {any[]} rows */
+export function buildSpinePages(rows) {
+  const out = [];
+  for (let i = 0; i < rows.length; i += COLS_PER_PAGE) {
+    out.push(rows.slice(i, i + COLS_PER_PAGE));
+  }
+  return out.length ? out : [[]];
+}
+
+function computeScale(pageRows) {
+  const sum = pageRows.reduce((acc, r) => acc + effectiveWidthCm(r), 0);
+  if (!Number.isFinite(sum) || sum <= 0) return 1;
+  return INNER_PAGE_WIDTH_CM / sum;
+}
+
+function Cell({ children, className = "", style }) {
   return (
-    <div className="min-w-0">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-[#787774]">{label}</p>
-      <p className="mt-0.5 break-words text-[13px] font-medium leading-snug text-[#37352f]">{v || "—"}</p>
-    </div>
+    <td
+      className={`border border-black px-1 text-center align-middle ${className}`}
+      style={style}
+    >
+      {children}
+    </td>
   );
 }
 
-/** @param {{ row: { title?: string, fiscalYear?: string, yearMonth?: string, period?: string, serialLabel?: string, orgName?: string, widthCm?: number } }} props */
-export function BinderSpineCard({ row }) {
-  const w = effectiveBinderWidthCm(row);
-  const title = String(row.title ?? "").trim();
+function LabelText({ children }) {
+  return <span className="text-[14px] font-bold">{children}</span>;
+}
+
+function ValueText({ children }) {
+  return <span className="text-[14px]">{children}</span>;
+}
+
+/** @param {{ rows: any[] }} props */
+export function SpineTable({ rows }) {
+  const scale = computeScale(rows);
+  const colStyles = rows.map((r) => ({
+    width: `${effectiveWidthCm(r) * scale}cm`,
+    minWidth: `${effectiveWidthCm(r) * scale}cm`,
+    maxWidth: `${effectiveWidthCm(r) * scale}cm`,
+  }));
 
   return (
-    <div
-      className="binder-spine-card flex h-full min-h-[118mm] flex-row overflow-hidden bg-white shadow-sm print:min-h-[110mm] print:shadow-none"
+    <table
+      className="border-collapse bg-white"
       style={{
-        width: `${w}cm`,
-        minWidth: `${w}cm`,
-        border: "3px solid #37352f",
+        border: "3px solid black",
+        tableLayout: "fixed",
       }}
     >
-      <div
-        className="flex flex-[0.85] items-center justify-center border-r-[3px] border-[#37352f] bg-[#fbfbfa] px-2 py-3 print:bg-white"
-        style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
-      >
-        <span className="text-[17px] font-semibold leading-normal tracking-tight text-[#37352f]">{title || " "}</span>
-      </div>
-      <div className="flex min-w-0 flex-[1.15] flex-col justify-center gap-3 px-3 py-3">
-        <MetaBlock label="회계연도" value={row.fiscalYear} />
-        <MetaBlock label="연월" value={row.yearMonth} />
-        <MetaBlock label="기간" value={row.period} />
-        <MetaBlock label="일련번호" value={row.serialLabel} />
-        <MetaBlock label="기관명" value={row.orgName} />
-      </div>
-    </div>
+      <tbody>
+        <tr style={{ height: 36 }}>
+          {rows.map((r, i) => (
+            <Cell key={r.id ?? i} style={colStyles[i]}>
+              <LabelText>회계연도</LabelText>
+            </Cell>
+          ))}
+        </tr>
+        <tr style={{ height: 36 }}>
+          {rows.map((r, i) => (
+            <Cell key={r.id ?? i} style={colStyles[i]}>
+              <ValueText>{safeText(r.fiscalYear)}</ValueText>
+            </Cell>
+          ))}
+        </tr>
+        <tr style={{ height: 36 }}>
+          {rows.map((r, i) => (
+            <Cell key={r.id ?? i} style={colStyles[i]}>
+              <LabelText>연월</LabelText>
+            </Cell>
+          ))}
+        </tr>
+        <tr style={{ height: 38 }}>
+          {rows.map((r, i) => (
+            <Cell key={r.id ?? i} style={colStyles[i]}>
+              <ValueText>{safeText(`${String(r.yearMonth ?? "").trim()} ${String(r.period ?? "").trim()}`.trim())}</ValueText>
+            </Cell>
+          ))}
+        </tr>
+        <tr style={{ height: 36 }}>
+          {rows.map((r, i) => (
+            <Cell key={r.id ?? i} style={colStyles[i]}>
+              <LabelText>일련번호</LabelText>
+            </Cell>
+          ))}
+        </tr>
+        <tr style={{ height: 36 }}>
+          {rows.map((r, i) => (
+            <Cell key={r.id ?? i} style={colStyles[i]}>
+              <ValueText>{safeText(r.serialLabel)}</ValueText>
+            </Cell>
+          ))}
+        </tr>
+        <tr style={{ height: 220 }}>
+          {rows.map((r, i) => (
+            <Cell
+              key={r.id ?? i}
+              style={colStyles[i]}
+              className="p-0"
+            >
+              <div
+                className="flex h-full w-full items-center justify-center font-bold"
+                style={{
+                  writingMode: "vertical-rl",
+                  textOrientation: "mixed",
+                  fontSize: 22,
+                  minHeight: 200,
+                  lineHeight: 1.1,
+                }}
+              >
+                {safeText(r.title)}
+              </div>
+            </Cell>
+          ))}
+        </tr>
+        <tr style={{ height: 36 }}>
+          {rows.map((r, i) => (
+            <Cell key={r.id ?? i} style={colStyles[i]}>
+              <LabelText>기관명</LabelText>
+            </Cell>
+          ))}
+        </tr>
+        <tr style={{ height: 36 }}>
+          {rows.map((r, i) => (
+            <Cell key={r.id ?? i} style={colStyles[i]}>
+              <ValueText>{safeText(r.orgName)}</ValueText>
+            </Cell>
+          ))}
+        </tr>
+      </tbody>
+    </table>
   );
 }
 
-/**
- * @param {{ rows: object[], forPrint?: boolean }} props
- */
-export function BinderSpineGrid({ rows, forPrint = false }) {
-  if (!rows.length) {
-    return <p className="text-sm text-[#787774]">표지를 추가해 주세요.</p>;
-  }
-
+/** @param {{ rows: any[], forPrint?: boolean }} props */
+export function SpineTableDocument({ rows, forPrint = false }) {
+  const pages = buildSpinePages(rows);
   return (
-    <div
-      className={
-        forPrint
-          ? "flex w-full max-w-[277mm] flex-wrap content-start items-stretch justify-start gap-4 print:max-w-none"
-          : "flex flex-wrap content-start items-stretch justify-start gap-4"
-      }
-    >
-      {rows.map((row) => (
-        <BinderSpineCard key={row.id} row={row} />
+    <div className={forPrint ? "spine-doc-print" : ""}>
+      {pages.map((pageRows, i) => (
+        <div
+          key={i}
+          style={
+            forPrint
+              ? {
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  pageBreakAfter: i < pages.length - 1 ? "always" : "auto",
+                }
+              : { marginBottom: 16 }
+          }
+        >
+          <SpineTable rows={pageRows} />
+        </div>
       ))}
     </div>
   );
