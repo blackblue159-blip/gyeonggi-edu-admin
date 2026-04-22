@@ -7,7 +7,7 @@ const navCls = ({ isActive }) =>
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-10 border-b border-[#e9e9e7] bg-white/90 backdrop-blur-sm">
+    <header className="sticky top-0 z-10 border-b border-[#e9e9e7] bg-white/90 backdrop-blur-sm print:hidden">
       <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <NavLink to="/" className="group flex flex-col gap-0.5">
           <span className="text-lg font-semibold tracking-tight text-[#37352f] group-hover:text-[#2383e2]">
