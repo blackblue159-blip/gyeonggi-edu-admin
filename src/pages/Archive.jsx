@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { buildExpensePages, ExpenseVoucherDocument } from "../components/ExpenseVoucherOutput.jsx";
 
 const STORAGE_LEDGER = "gyeonggi.archive.ledger.v1";
 const STORAGE_EXPENSE = "gyeonggi.archive.expense.v1";
@@ -54,7 +55,7 @@ function defaultExpenseRow(index = 1) {
     endDate: "",
     serialLabel: "",
     orgName: "OO학교",
-    widthCm: 4,
+    widthCm: 3,
   };
 }
 
@@ -67,6 +68,26 @@ function loadJson(key, fallback) {
   } catch {
     return fallback;
   }
+}
+
+function normalizeLedgerState(raw) {
+  if (!Array.isArray(raw) || raw.length === 0) return [defaultLedgerRow()];
+  return raw.map((r) =>
+    r && typeof r === "object"
+      ? { ...defaultLedgerRow(), ...r, id: typeof r.id === "string" ? r.id : newId() }
+      : defaultLedgerRow()
+  );
+}
+
+function normalizeExpenseState(raw) {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return [1, 2, 3, 4, 5].map((n) => defaultExpenseRow(n));
+  }
+  return raw.map((r, i) =>
+    r && typeof r === "object"
+      ? { ...defaultExpenseRow(i + 1), ...r, id: typeof r.id === "string" ? r.id : newId() }
+      : defaultExpenseRow(i + 1)
+  );
 }
 
 function groupLedgerByBox(rows) {
@@ -160,40 +181,10 @@ function BoxLabelPrint({ boxKey, rows }) {
   );
 }
 
-function ExpenseSpineColumn({ row }) {
-  const w = Number(row.widthCm);
-  const widthCm = Number.isFinite(w) && w > 0 ? w : 4;
-  const ym = [row.yearLabel, row.monthLabel].filter(Boolean).join(" ");
-  const range =
-    [row.startDate, row.endDate].every((s) => !String(s || "").trim()) ? "" : `${row.startDate || ""} ~ ${row.endDate || ""}`;
-
-  return (
-    <div
-      className="flex min-h-[280px] flex-col border border-[#c4c4c4] bg-white text-center text-[11px] text-[#222] shadow-sm print:shadow-none"
-      style={{ width: `${widthCm}cm`, minWidth: `${widthCm}cm`, flex: "0 0 auto" }}
-    >
-      <div className="border-b border-[#ddd] py-1.5 text-[10px] text-[#555]">회계연도</div>
-      <div className="py-2 font-medium">{row.fiscalYear || "—"}</div>
-      <div className="border-b border-t border-[#ddd] py-1.5 text-[10px] text-[#555]">연월</div>
-      <div className="py-2 font-medium">{ym || "—"}</div>
-      <div className="border-b border-t border-[#ddd] py-1.5 text-[10px] text-[#555]">기간</div>
-      <div className="flex flex-1 items-center justify-center px-1 py-2 text-[11px] leading-snug">{range || "—"}</div>
-      <div className="border-b border-t border-[#ddd] py-1.5 text-[10px] text-[#555]">일련번호</div>
-      <div className="py-2 font-medium">{row.serialLabel || "—"}</div>
-      <div className="border-b border-t border-[#ddd] py-2 text-[12px] font-semibold leading-tight">{row.title || "—"}</div>
-      <div className="border-b border-[#ddd] py-1.5 text-[10px] text-[#555]">기관명</div>
-      <div className="py-2 font-medium">{row.orgName || "—"}</div>
-    </div>
-  );
-}
-
 export default function Archive() {
   const [tab, setTab] = useState("preserve");
-  const [ledger, setLedger] = useState(() => loadJson(STORAGE_LEDGER, [defaultLedgerRow()]));
-  const [expenseRows, setExpenseRows] = useState(() =>
-    loadJson(STORAGE_EXPENSE, [1, 2, 3, 4, 5].map((n) => defaultExpenseRow(n)))
-  );
-  const printRef = useRef(null);
+  const [ledger, setLedger] = useState(() => normalizeLedgerState(loadJson(STORAGE_LEDGER, null)));
+  const [expenseRows, setExpenseRows] = useState(() => normalizeExpenseState(loadJson(STORAGE_EXPENSE, null)));
 
   useEffect(() => {
     localStorage.setItem(STORAGE_LEDGER, JSON.stringify(ledger));
@@ -254,10 +245,12 @@ export default function Archive() {
     window.print();
   }, []);
 
+  const expensePages = useMemo(() => buildExpensePages(expenseRows), [expenseRows]);
+
   const printExpense = useCallback(() => {
     const s = document.createElement("style");
     s.id = "archive-dynamic-print-page";
-    s.textContent = "@page { size: A4 landscape; margin: 10mm; }";
+    s.textContent = "@page { size: A4 landscape; margin: 1cm; }";
     document.head.appendChild(s);
     document.body.classList.add("archive-printing-expense");
     const handleAfter = () => {
@@ -284,6 +277,10 @@ export default function Archive() {
           body.archive-printing-covers .archive-print-bundle.print-covers { display: block !important; }
           body.archive-printing-labels .archive-print-bundle.print-labels { display: block !important; }
           body.archive-printing-expense .archive-print-bundle.print-expense { display: block !important; }
+          body.archive-printing-expense {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
         }
         @page { size: A4; margin: 12mm; }
         .print-labels-stack .label-page { page-break-after: always; }
@@ -540,7 +537,10 @@ export default function Archive() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-base font-semibold text-[#37352f]">지출증빙서 옆면 표지 — 기초자료</h2>
-                  <p className="mt-1 text-xs text-[#787774]">엑셀 「기초자료」 시트와 동일한 항목입니다. 너비(Cm)는 각 열(책꽂이 칸) 너비로 반영됩니다.</p>
+                  <p className="mt-1 text-xs text-[#787774]">
+                    엑셀 「기초자료」 A~J열과 동일합니다. J열 너비(cm)는 0이면 VBA와 같이 3cm로 처리됩니다. 출력물은 매크로와 같이
+                    A4 가로·여백 1cm·함초롬바탕 14pt·제목 세로 23pt·실선 테두리로 맞춥니다.
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -652,7 +652,7 @@ export default function Archive() {
                             step="0.1"
                             className="w-14 border-0 bg-transparent px-2 py-1.5 text-[11px] outline-none focus:bg-[#f7f6f3]"
                             value={row.widthCm}
-                            onChange={(e) => updateExpense(row.id, { widthCm: Number(e.target.value) || 4 })}
+                            onChange={(e) => updateExpense(row.id, { widthCm: Number(e.target.value) || 3 })}
                           />
                         </td>
                         <td className="px-2 py-1.5">
@@ -672,14 +672,13 @@ export default function Archive() {
             </div>
 
             <div className="rounded-xl border border-[#e9e9e7] bg-white p-4 shadow-sm sm:p-5">
-              <h3 className="text-sm font-semibold text-[#37352f]">출력물 미리보기</h3>
-              <p className="mt-1 text-xs text-[#787774]">가로로 나란히 배치됩니다. 인쇄 시 A4 가로를 권장합니다.</p>
+              <h3 className="text-sm font-semibold text-[#37352f]">출력물 미리보기 (엑셀 「출력물」 시트)</h3>
+              <p className="mt-1 text-xs text-[#787774]">
+                실제 크기는 A4 가로(인쇄 가용 폭 약 27.7cm) 기준입니다. 좌우로 스크롤해 확인하세요. 페이지가 넘치면 VBA와 같이
+                다음 장으로 나뉩니다 ({expensePages.length}페이지).
+              </p>
               <div className="mt-4 overflow-x-auto rounded-lg border border-[#e9e9e7] bg-[#fafafa] p-4">
-                <div className="flex flex-nowrap items-stretch gap-2 print:gap-3">
-                  {expenseRows.map((row) => (
-                    <ExpenseSpineColumn key={row.id} row={row} />
-                  ))}
-                </div>
+                <ExpenseVoucherDocument pages={expensePages} printMode={false} />
               </div>
             </div>
           </section>
@@ -704,12 +703,8 @@ export default function Archive() {
         </div>
       </div>
 
-      <div className="archive-print-bundle print-expense p-4">
-        <div className="flex flex-nowrap items-stretch justify-center gap-3">
-          {expenseRows.map((row) => (
-            <ExpenseSpineColumn key={`p-${row.id}`} row={row} />
-          ))}
-        </div>
+      <div className="archive-print-bundle print-expense">
+        <ExpenseVoucherDocument pages={expensePages} printMode />
       </div>
     </main>
   );
