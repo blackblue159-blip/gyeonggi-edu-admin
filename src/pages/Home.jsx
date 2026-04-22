@@ -134,6 +134,15 @@ export default function Home() {
             cta="바로 가기"
           />
           <ToolCard
+            icon="🛒"
+            title="지마켓 장바구니 선택기"
+            description="지마켓 장바구니에서 키워드로 원하는 품목만 자동 체크하는 북마클릿 설치 안내입니다."
+            badges={["북마클릿", "자동 선택", "키워드", "지마켓"]}
+            status="사용가능"
+            to="/tools"
+            cta="설치 안내 보기"
+          />
+          <ToolCard
             icon="💳"
             title="카드 고지서 매칭"
             description="에듀파인 원인행위 목록과 카드 청구 내역을 대조합니다. 엑셀·CSV는 브라우저 안에서만 처리되며 서버로 전송되지 않습니다."

@@ -6,6 +6,7 @@ import SchoolInfo from "./pages/SchoolInfo.jsx";
 import Calculator from "./pages/Calculator.jsx";
 import Inventory from "./pages/Inventory.jsx";
 import Archive from "./pages/Archive.jsx";
+import Tools from "./pages/Tools.jsx";
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/calculator" element={<Calculator />} />
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/archive" element={<Archive />} />
+        <Route path="/tools" element={<Tools />} />
         <Route path="/school-info" element={<SchoolInfo />} />
         <Route path="/card-match" element={<CardMatch />} />
       </Route>

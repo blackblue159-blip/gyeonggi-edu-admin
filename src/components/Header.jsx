@@ -31,6 +31,9 @@ export function Header() {
           <NavLink to="/archive" className={navCls}>
             편철 표지
           </NavLink>
+          <NavLink to="/tools" className={navCls}>
+            도구
+          </NavLink>
           <NavLink to="/school-info" className={navCls}>
             학교 정보
           </NavLink>
