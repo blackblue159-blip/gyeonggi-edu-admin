@@ -240,15 +240,16 @@ function effectiveWidthCm(v) {
 
 function buildSpinePrintHtml(rows) {
   const pages = chunkRows(rows, 5);
-  const INNER_WIDTH_CM = 27.7; // A4 가로 폭 29.7cm - 여백 2cm
+  const COLS = 5;
 
   const cell = (inner, extraClass = "") => `<td class="cell ${extraClass}">${inner}</td>`;
   const row = (cells, extraClass = "") => `<tr class="${extraClass}">${cells.join("")}</tr>`;
 
   const makeTable = (pageRows) => {
-    const sumCm = pageRows.reduce((acc, r) => acc + effectiveWidthCm(r.widthCm), 0) || 1;
-    const scale = INNER_WIDTH_CM / sumCm;
-    const colStyles = pageRows.map((r) => `width:${(effectiveWidthCm(r.widthCm) * scale).toFixed(4)}cm;`);
+    // 5열 고정 + 균등 분배 (입력 너비(cm) 무시)
+    const padded = [...pageRows];
+    while (padded.length < COLS) padded.push({ id: `__empty_${padded.length}` });
+    const colStyle = `width:${(100 / COLS).toFixed(6)}%;`;
 
     const v = (x) => escapeHtml(x || "\u00a0");
     const ymPeriod = (r) => {
@@ -257,10 +258,10 @@ function buildSpinePrintHtml(rows) {
       const out = `${a} ${b}`.trim();
       return out || "\u00a0";
     };
-    const serial = (r) => String(r.serialLabel ?? "").trim() || "\u00a0";
+    const serial = (r) => String(r.serialLabel ?? r.serial ?? r.no ?? "").trim() || "\u00a0";
 
     const mkCells = (render) =>
-      pageRows.map((r, i) => `<td class="cell" style="${colStyles[i]}">${render(r)}</td>`);
+      padded.map((r) => `<td class="cell" style="${colStyle}">${render(r)}</td>`);
 
     return `
       <table>
