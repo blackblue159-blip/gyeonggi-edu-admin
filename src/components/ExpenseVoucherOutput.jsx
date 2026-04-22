@@ -132,14 +132,27 @@ export function SpineTable({ rows }) {
     <>
       <style>{`
         .spine-sheet-wrap { padding-top: 8mm; box-sizing: border-box; }
-        .spine-sheet-table { table-layout: fixed; width: auto; border-collapse: collapse; }
+        .spine-sheet-table { table-layout: fixed; width: auto; border-collapse: collapse; border: none !important; }
         .spine-sheet-table td.spine-col-gap {
           border: none !important;
           background: #fff !important;
         }
-        .spine-sheet-table .spine-row-label { height: 36px; }
-        .spine-sheet-table .spine-row-value { height: 40px; }
-        .spine-sheet-table .spine-row-title { height: 200px; }
+        .spine-sheet-table tbody td:not(.spine-col-gap) {
+          border-left: 3px solid #000 !important;
+          border-right: 3px solid #000 !important;
+          border-top: 1px solid #000 !important;
+          border-bottom: 1px solid #000 !important;
+        }
+        .spine-sheet-table tbody tr:first-child td:not(.spine-col-gap) {
+          border-top: 3px solid #000 !important;
+        }
+        .spine-sheet-table tbody tr:last-child td:not(.spine-col-gap) {
+          border-bottom: 3px solid #000 !important;
+        }
+        /* 인쇄와 동일 비율: 라벨/값 축소, 제목 +20% (합계 높이 스케일 유지) */
+        .spine-sheet-table .spine-row-label { height: 31.26px; }
+        .spine-sheet-table .spine-row-value { height: 34.74px; }
+        .spine-sheet-table .spine-row-title { height: 240px; }
         .spine-sheet-table .spine-title-cell { overflow: hidden; }
         .spine-sheet-table .spine-title-inner {
           min-height: 0;
@@ -150,12 +163,7 @@ export function SpineTable({ rows }) {
         }
       `}</style>
       <div className="spine-sheet-wrap">
-        <table
-          className="spine-sheet-table border-collapse bg-white"
-          style={{
-            border: "3px solid black",
-          }}
-        >
+        <table className="spine-sheet-table border-collapse bg-white">
           <tbody>
             <tr className="spine-row spine-row-label">
               {withGaps(rows, colStyles, (r, i, style) => (

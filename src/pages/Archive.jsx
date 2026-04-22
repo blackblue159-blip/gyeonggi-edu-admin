@@ -339,7 +339,7 @@ function buildSpinePrintHtml(rows) {
         width: auto;
         height: 190mm;
         border-collapse: collapse;
-        border: 3px solid #000;
+        border: none;
         table-layout: fixed;
         page-break-inside: avoid;
         break-inside: avoid;
@@ -348,12 +348,22 @@ function buildSpinePrintHtml(rows) {
         page-break-inside: avoid;
         break-inside: avoid;
       }
+      /* 각 표지(열): 좌우 3px, 행 사이 1px, 맨 위·아래 행만 상·하 3px */
       td.cell {
-        border: 1px solid #000;
+        border-left: 3px solid #000;
+        border-right: 3px solid #000;
+        border-top: 1px solid #000;
+        border-bottom: 1px solid #000;
         text-align: center;
         vertical-align: middle;
         padding: 0.5mm 1mm;
         box-sizing: border-box;
+      }
+      tbody tr:first-child td.cell {
+        border-top: 3px solid #000;
+      }
+      tbody tr:last-child td.cell {
+        border-bottom: 3px solid #000;
       }
       td.cell-gap {
         width: 4mm;
@@ -364,10 +374,11 @@ function buildSpinePrintHtml(rows) {
         background: #fff;
         vertical-align: middle;
       }
-      tr.h-label td.cell { height: 10mm; }
-      tr.h-value td.cell { height: 12mm; }
-      /* 190mm - (라벨 4*10mm) - (값 4*12mm) = 102mm */
-      tr.h-title td.cell { height: 102mm; padding: 0; overflow: hidden; }
+      /* 제목 행 +20% → 라벨/값 행 비율 축소, 합계 190mm 유지 */
+      tr.h-label td.cell { height: 7.68mm; }
+      tr.h-value td.cell { height: 9.22mm; }
+      /* 4*7.68 + 4*9.22 + 122.4 = 190mm */
+      tr.h-title td.cell { height: 122.4mm; padding: 0; overflow: hidden; }
       .label { font-weight: 700; font-size: 10pt; }
       .value { font-size: 10pt; }
       .title {
@@ -525,11 +536,11 @@ export default function Archive() {
         .print-labels-stack .label-page:last-child { page-break-after: auto; }
       `}</style>
       <style>{`
-        /* 편철 표지 인쇄: A4 세로(높이 29.7cm) − 여백 2cm = 표 높이 27.7cm */
+        /* 편철 표지: 새 창 인쇄와 동일 행 높이(A4 가로 가용 높이 190mm) */
         @media print {
           body.archive-printing-expense table.spine-sheet-table {
-            height: 277mm;
-            max-height: 277mm;
+            height: 190mm;
+            max-height: 190mm;
             box-sizing: border-box;
             page-break-inside: avoid;
             break-inside: avoid;
@@ -542,21 +553,20 @@ export default function Archive() {
             break-inside: avoid;
           }
           body.archive-printing-expense table.spine-sheet-table tr.spine-row-label td {
-            height: 10mm !important;
-            max-height: 10mm !important;
+            height: 7.68mm !important;
+            max-height: 7.68mm !important;
             padding: 0.5mm 1mm !important;
             vertical-align: middle !important;
           }
           body.archive-printing-expense table.spine-sheet-table tr.spine-row-value td {
-            height: 12mm !important;
-            max-height: 12mm !important;
+            height: 9.22mm !important;
+            max-height: 9.22mm !important;
             padding: 0.5mm 1mm !important;
             vertical-align: middle !important;
           }
-          /* 27.7cm − 라벨 4×1cm − 값 4×1.2cm = 18.9cm */
           body.archive-printing-expense table.spine-sheet-table tr.spine-row-title td {
-            height: 189mm !important;
-            max-height: 189mm !important;
+            height: 122.4mm !important;
+            max-height: 122.4mm !important;
             padding: 0 !important;
             vertical-align: middle !important;
           }
