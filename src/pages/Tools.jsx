@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 export default function Tools() {
   const bookmarkletHref = useMemo(
@@ -6,6 +6,19 @@ export default function Tools() {
       `javascript:(function(){  var input = prompt("선택할 품목들을 입력하세요 (공백/쉼표 가능):");  if (!input) return;  var kws = input.split(/[\\s,]+/).filter(s => s.trim().length > 0);  var cbs = Array.from(document.querySelectorAll('input[type="checkbox"]'));  var count = 0;  cbs.forEach(cb => {    var container = cb.parentElement;    while (container) {      var parent = container.parentElement;      if (!parent || parent.tagName === 'BODY') break;      if (parent.querySelectorAll('input[type="checkbox"]').length > 1) break;      container = parent;    }    var shouldBeChecked = false;    if (container) {      /* 1. 상품명 구역 찾기 */      var rawName = container.innerText || "";      var nameEl = container.querySelector('.item_name, .info__name, .name, a[href*="goods.gmarket.co.kr"]');      if (nameEl) rawName = nameEl.innerText;      var txtNoSpace = rawName.replace(/\\s/g, '').toLowerCase();            /* 2. 지마켓 상품명을 기호와 띄어쓰기 기준으로 '단어'로 쪼갭니다 */      /* (숫자만 있는 단어는 오작동을 막기 위해 제외하고, 글자가 포함된 2글자 이상 단어만 추출) */      var siteTokens = rawName.split(/[^a-zA-Z0-9가-힣]+/).filter(t => t.length >= 2 && /[가-힣a-zA-Z]/.test(t));      shouldBeChecked = kws.some(kw => {        var kwClean = kw.replace(/\\s/g, '').toLowerCase();        if (kwClean.length === 0) return false;                /* 조건 A: 기존처럼 상품명이 키워드를 포함하는지 확인 */        if (txtNoSpace.includes(kwClean)) return true;                /* 조건 B: 쪼개진 '단어' 중 하나라도 주무관님의 긴 입력값 안에 쏙 들어가는지 확인 */        for (var i = 0; i < siteTokens.length; i++) {          if (kwClean.includes(siteTokens[i].toLowerCase())) return true;        }        return false;      });    }    /* 3. 체크 및 해제 */    if (shouldBeChecked && !cb.checked && !cb.disabled) {      cb.click();      count++;    } else if (!shouldBeChecked && cb.checked && !cb.disabled) {      cb.click();    }  });  alert("단어 쪼개기 매칭 완료! " + count + "개의 품목을 찾아냈습니다.");})();`,
     []
   );
+
+  const [copyState, setCopyState] = useState("idle");
+
+  const copyBookmarklet = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(bookmarkletHref);
+      setCopyState("copied");
+      window.setTimeout(() => setCopyState("idle"), 1200);
+    } catch {
+      setCopyState("failed");
+      window.setTimeout(() => setCopyState("idle"), 1600);
+    }
+  }, [bookmarkletHref]);
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 sm:px-6 sm:py-14">
@@ -27,9 +40,31 @@ export default function Tools() {
               <span className="font-mono">Ctrl+Shift+B</span>)
             </li>
             <li>
-              - 아래 <span className="font-medium text-[#37352f]">버튼을 북마크바로 드래그</span>해서 놓으면 설치됩니다.
+              - 아래 <span className="font-medium text-[#37352f]">코드 복사</span> 버튼을 눌러 코드(주소)를 복사합니다.
+            </li>
+            <li>
+              - 북마크바 빈 곳을 <span className="font-medium text-[#37352f]">우클릭 → “북마크 추가”</span>
+            </li>
+            <li>
+              - 이름: <span className="font-medium text-[#37352f]">지마켓 장바구니 선택기</span>
+            </li>
+            <li>
+              - URL(주소) 칸에 <span className="font-medium text-[#37352f]">복사한 코드</span>를 붙여넣고 저장합니다.
             </li>
           </ol>
+
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <button
+              type="button"
+              onClick={copyBookmarklet}
+              className="inline-flex w-full items-center justify-center rounded-md bg-[#2383e2] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1a6ec4] sm:w-auto"
+            >
+              {copyState === "copied" ? "복사됨" : copyState === "failed" ? "복사 실패(직접 복사)" : "코드 복사"}
+            </button>
+            <span className="text-xs text-[#787774]">
+              클립보드가 막히면 아래 <span className="font-medium text-[#37352f]">코드 보기</span>에서 직접 복사하세요.
+            </span>
+          </div>
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
             <a
@@ -42,10 +77,11 @@ export default function Tools() {
                 e.preventDefault();
               }}
             >
-              지마켓 장바구니 선택기 (드래그해서 설치)
+              (보조) 드래그로 설치
             </a>
             <span className="text-xs text-[#787774]">
-              클릭 실행은 브라우저에서 막힐 수 있어요. <span className="font-medium text-[#37352f]">드래그 설치</span>를 권장합니다.
+              드래그 설치는 브라우저/정책에 따라 막힐 수 있어요. 위의 <span className="font-medium text-[#37352f]">복사→북마크 추가</span>{" "}
+              방식이 가장 안정적입니다.
             </span>
           </div>
 
