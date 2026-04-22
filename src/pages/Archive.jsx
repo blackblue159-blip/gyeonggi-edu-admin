@@ -218,6 +218,162 @@ function BoxLabelPrint({ boxKey, rows }) {
   );
 }
 
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function chunkRows(rows, size) {
+  const out = [];
+  for (let i = 0; i < rows.length; i += size) out.push(rows.slice(i, i + size));
+  return out.length ? out : [[]];
+}
+
+function effectiveWidthCm(v) {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : 3;
+}
+
+function buildSpinePrintHtml(rows) {
+  const pages = chunkRows(rows, 5);
+  const INNER_WIDTH_CM = 19; // A4 세로 폭 21cm - 여백 2cm
+
+  const cell = (inner, extraClass = "") => `<td class="cell ${extraClass}">${inner}</td>`;
+  const row = (cells, extraClass = "") => `<tr class="${extraClass}">${cells.join("")}</tr>`;
+
+  const makeTable = (pageRows) => {
+    const sumCm = pageRows.reduce((acc, r) => acc + effectiveWidthCm(r.widthCm), 0) || 1;
+    const scale = INNER_WIDTH_CM / sumCm;
+    const colStyles = pageRows.map((r) => `width:${(effectiveWidthCm(r.widthCm) * scale).toFixed(4)}cm;`);
+
+    const v = (x) => escapeHtml(x || "\u00a0");
+    const ymPeriod = (r) => {
+      const a = String(r.yearMonth ?? "").trim();
+      const b = String(r.period ?? "").trim();
+      const out = `${a} ${b}`.trim();
+      return out || "\u00a0";
+    };
+    const serial = (r) => String(r.serialLabel ?? "").trim() || "\u00a0";
+
+    const mkCells = (render) =>
+      pageRows.map((r, i) => `<td class="cell" style="${colStyles[i]}">${render(r)}</td>`);
+
+    return `
+      <table>
+        <tbody>
+          ${row(mkCells(() => `<div class="label">회계연도</div>`), "h-label")}
+          ${row(mkCells((r) => `<div class="value">${v(r.fiscalYear)}</div>`), "h-value")}
+          ${row(mkCells(() => `<div class="label">연월</div>`), "h-label")}
+          ${row(mkCells((r) => `<div class="value">${v(ymPeriod(r))}</div>`), "h-value")}
+          ${row(mkCells(() => `<div class="label">일련번호</div>`), "h-label")}
+          ${row(mkCells((r) => `<div class="value">${v(serial(r))}</div>`), "h-value")}
+          ${row(
+            mkCells(
+              (r) =>
+                `<div class="title">${v(r.title)}</div>`
+            ),
+            "h-title"
+          )}
+          ${row(mkCells(() => `<div class="label">기관명</div>`), "h-label")}
+          ${row(mkCells((r) => `<div class="value">${v(r.orgName)}</div>`), "h-value")}
+        </tbody>
+      </table>
+    `;
+  };
+
+  const body = pages
+    .map(
+      (p, i) => `
+        <div class="page" style="${i < pages.length - 1 ? "page-break-after:always;" : ""}">
+          ${makeTable(p)}
+        </div>
+      `
+    )
+    .join("");
+
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>편철 표지 인쇄</title>
+    <style>
+      @page {
+        size: 210mm 297mm portrait;
+        margin: 1cm;
+      }
+      html, body {
+        width: 210mm;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        font-family: Pretendard, \"Malgun Gothic\", system-ui, sans-serif;
+      }
+      .page {
+        width: 190mm;
+        height: 277mm;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      table {
+        width: 100%;
+        height: 255mm;
+        border-collapse: collapse;
+        border: 3px solid #000;
+        table-layout: fixed;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      thead, tbody, tr, td {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      td.cell {
+        border: 1px solid #000;
+        text-align: center;
+        vertical-align: middle;
+        padding: 0.5mm 1mm;
+        box-sizing: border-box;
+      }
+      tr.h-label td.cell { height: 10mm; }
+      tr.h-value td.cell { height: 12mm; }
+      tr.h-title td.cell { height: 167mm; padding: 0; }
+      .label { font-weight: 700; font-size: 10pt; }
+      .value { font-size: 10pt; }
+      .title {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        font-weight: 800;
+        font-size: 24pt;
+        line-height: 1.1;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    ${body}
+    <script>
+      window.onload = () => {
+        try { window.focus(); } catch {}
+        window.print();
+      };
+    </script>
+  </body>
+</html>`;
+}
+
 export default function Archive() {
   const [tab, setTab] = useState("preserve");
   const [ledger, setLedger] = useState(() => normalizeLedgerState(loadJson(STORAGE_LEDGER, null)));
@@ -283,20 +439,13 @@ export default function Archive() {
   }, []);
 
   const printExpense = useCallback(() => {
-    const s = document.createElement("style");
-    s.id = "archive-dynamic-print-page";
-    // 일부 브라우저에서 `A4 portrait` 문법을 무시하는 경우가 있어, mm로 명시합니다.
-    s.textContent = "@page { size: 210mm 297mm; margin: 1cm; }";
-    document.head.appendChild(s);
-    document.body.classList.add("archive-printing-expense");
-    const handleAfter = () => {
-      document.body.classList.remove("archive-printing-expense");
-      document.getElementById("archive-dynamic-print-page")?.remove();
-      window.removeEventListener("afterprint", handleAfter);
-    };
-    window.addEventListener("afterprint", handleAfter);
-    window.print();
-  }, []);
+    const w = window.open("", "_blank");
+    if (!w) return;
+    const html = buildSpinePrintHtml(expenseRows);
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  }, [expenseRows]);
 
   const boxGroups = useMemo(() => groupLedgerByBox(ledger), [ledger]);
 
