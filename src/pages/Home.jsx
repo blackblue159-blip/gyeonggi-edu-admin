@@ -138,7 +138,7 @@ export default function Home() {
             title="지마켓 장바구니 선택기"
             description="지마켓 장바구니에서 키워드로 원하는 품목만 자동 체크하는 북마클릿 설치 안내입니다."
             badges={["북마클릿", "자동 선택", "키워드", "지마켓"]}
-            status="사용가능"
+            status="준비중"
             to="/tools"
             cta="설치 안내 보기"
           />
