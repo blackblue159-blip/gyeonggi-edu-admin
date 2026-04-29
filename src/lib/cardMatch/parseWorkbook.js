@@ -1,5 +1,3 @@
-import * as XLSX from "xlsx";
-
 function normalizeRowKeys(row) {
   const o = {};
   for (const [k, v] of Object.entries(row)) {
@@ -31,6 +29,7 @@ async function readCsvText(file) {
  * @returns {Promise<Record<string, unknown>[]>}
  */
 export async function parseDataFileToRows(file) {
+  const XLSX = await import("xlsx");
   const name = file.name.toLowerCase();
   let rows;
 

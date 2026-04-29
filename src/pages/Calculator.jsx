@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { calcEconomicRepairLimit } from "../lib/utils/repairCalculator.js";
 
 function parseNonNegativeNumber(input) {
   const s = String(input ?? "").replaceAll(",", "").trim();
@@ -11,10 +12,6 @@ function parseNonNegativeNumber(input) {
 function formatWon(n) {
   if (!Number.isFinite(n)) return "";
   return Math.round(n).toLocaleString("ko-KR");
-}
-
-function clampMin(n, min) {
-  return n < min ? min : n;
 }
 
 export default function Calculator() {
@@ -33,25 +30,11 @@ export default function Calculator() {
     if (Number.isNaN(price) || Number.isNaN(life) || Number.isNaN(used)) return { error: "숫자만 입력해 주세요. (0 이상)" };
     if (price === 0) return { value: 0, basis: "최초연도", note: null };
     if (life <= 0) return { error: "내용연수는 0보다 커야 합니다." };
-    if (used <= 0) return { error: "사용연수는 0보다 커야 합니다." };
+    if (used < 0) return { error: "사용연수는 0 이상이어야 합니다." };
 
-    const usedYears = clampMin(used, 1);
-    const lifeYears = life;
-
-    if (usedYears === 1) {
-      return { value: price * 0.7, basis: "최초연도", note: null };
-    }
-
-    if (usedYears >= lifeYears) {
-      return {
-        value: price * 0.2,
-        basis: "최종연도",
-        note: usedYears > lifeYears ? "사용연수가 내용연수를 초과하여 최종연도 기준을 적용했습니다." : null,
-      };
-    }
-
-    const v = price * 0.7 - (usedYears * price) / (lifeYears * 2);
-    return { value: v, basis: "중간연도", note: null };
+    const out = calcEconomicRepairLimit({ price, lifeYears: life, usedYears: used });
+    if (!out) return { error: "입력값을 확인해 주세요." };
+    return { value: out.limitAmount, basis: out.status, note: out.description };
   }, [price, life, used]);
 
   const guidance = useMemo(() => {
@@ -212,10 +195,10 @@ export default function Calculator() {
           </summary>
           <div className="mt-3 space-y-2 text-[12px] leading-relaxed text-[#5c5b57]">
             <p>
-              - 사용연수 = 1 → 최초연도: 취득가격 × 70%
+              - 사용연수 &lt; 1 → 최초연도: 취득가격 × 70%
             </p>
             <p>
-              - 사용연수 ≥ 내용연수 → 최종연도: 취득가격 × 20%
+              - 사용연수 ≥ (내용연수 - 1) → 최종연도: 취득가격 × 20%
             </p>
             <p>
               - 그 외 → 중간연도: (취득가격 × 0.7) - (사용연수 × 취득가격) / (내용연수 × 2)

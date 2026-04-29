@@ -1,4 +1,3 @@
-import ExcelJS from "exceljs";
 import {
   MATCH_KIND_11,
   MATCH_KIND_NONE,
@@ -29,6 +28,7 @@ function excelDateValue(v) {
  */
 export async function buildCardMatchWorkbook(payload) {
   const { checklist, unmatchedOut, metrics, kindsOrdered } = payload;
+  const ExcelJS = (await import("exceljs")).default;
   const wb = new ExcelJS.Workbook();
 
   const ws = wb.addWorksheet(SHEET_RESULT_MAIN, {

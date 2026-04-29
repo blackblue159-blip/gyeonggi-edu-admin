@@ -205,6 +205,9 @@ export default function SchoolInfo() {
         학교를 검색한 뒤 이번 달 학사일정을 달력에서 확인하고, 날짜를 누르면 그날의{" "}
         <span className="font-medium text-[#37352f]">중식</span> 급식을 볼 수 있습니다.
       </p>
+      <p className="mt-2 max-w-2xl text-[11px] leading-relaxed text-[#9b9a97]">
+        본 서비스는 교육부 공공데이터포털의 공개 API 키를 사용하며, 호출 한도에 따라 조회가 제한될 수 있습니다.
+      </p>
 
       <section className="mt-8 rounded-lg border border-[#e9e9e7] bg-white p-4 shadow-[0_1px_2px_rgba(15,15,15,0.04)] sm:p-5">
         <h2 className="text-[15px] font-semibold text-[#37352f]">1. 학교 검색</h2>

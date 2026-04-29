@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import * as XLSX from "xlsx";
-import ExcelJS from "exceljs";
+// xlsx/exceljs는 용량이 커서 필요한 시점에 동적으로 로드합니다.
+import { calcEconomicRepairLimit } from "../lib/utils/repairCalculator.js";
 
 function parseNonNegativeNumber(v) {
   const s = String(v ?? "").replaceAll(",", "").trim();
@@ -40,11 +40,13 @@ function parseDate(value) {
     if (!Number.isNaN(dt.getTime())) return dt;
   }
 
-  // Excel serial date number
+  // Excel serial date number (1900 date system; Excel's 1900 leap-year bug handled by 1899-12-30 base)
   const n = Number(s);
   if (Number.isFinite(n) && n > 20000 && n < 90000) {
-    const dt = XLSX.SSF.parse_date_code(n);
-    if (dt) return new Date(dt.y, dt.m - 1, dt.d);
+    const ms = Math.round(n * 24 * 60 * 60 * 1000);
+    const d0 = new Date(1899, 11, 30); // local time base (commonly used for Excel serial)
+    const dt = new Date(d0.getTime() + ms);
+    if (!Number.isNaN(dt.getTime())) return dt;
   }
 
   const dt2 = new Date(s);
@@ -168,21 +170,9 @@ function addYears(date, years) {
 }
 
 function economicRepairLimit(price, lifeYears, usedYears) {
-  if (!Number.isFinite(price) || !Number.isFinite(lifeYears) || !Number.isFinite(usedYears)) return null;
-  if (lifeYears <= 0 || usedYears <= 0) return null;
-  if (usedYears === 1) return { value: price * 0.7, basis: "최초연도", note: null };
-  if (usedYears >= lifeYears) {
-    return {
-      value: price * 0.2,
-      basis: "최종연도",
-      note: usedYears > lifeYears ? "사용연수가 내용연수를 초과하여 최종연도 기준을 적용했습니다." : null,
-    };
-  }
-  return {
-    value: price * 0.7 - (usedYears * price) / (lifeYears * 2),
-    basis: "중간연도",
-    note: null,
-  };
+  const out = calcEconomicRepairLimit({ price, lifeYears, usedYears });
+  if (!out) return null;
+  return { value: out.limitAmount, basis: out.status, note: out.description };
 }
 
 function normalizeKey(s) {
@@ -453,6 +443,7 @@ export default function Inventory() {
     try {
       setLastFileName(file?.name || "");
       const buf = await file.arrayBuffer();
+      const XLSX = await import("xlsx");
       const wb = XLSX.read(buf, { type: "array" });
       const ws = wb.Sheets[wb.SheetNames[0]];
       // 파일마다 "제목/단위 행"이 섞여 헤더 위치가 달라질 수 있어, 첫 20행에서 헤더를 자동 탐지합니다.
@@ -555,6 +546,7 @@ export default function Inventory() {
       { 초과: 0, 임박: 0, 여유: 0 }
     );
 
+    const ExcelJS = (await import("exceljs")).default;
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("물품대장");
     ws.properties.defaultRowHeight = 18;

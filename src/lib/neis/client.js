@@ -118,7 +118,10 @@ export async function searchSchools(q) {
  */
 export async function getMonthSchedule(month, school) {
   const start = `${month}-01`.replace(/-/g, "");
-  const end = nextMonthFirstDay(month).replace(/-/g, "");
+  const year = Number(month.slice(0, 4));
+  const mon = Number(month.slice(5, 7));
+  const last = new Date(year, mon, 0); // mon: 1-12, Date monthIndex is 0-based; mon gives next month, day 0 => last day of target month
+  const end = `${year}-${String(mon).padStart(2, "0")}-${String(last.getDate()).padStart(2, "0")}`.replace(/-/g, "");
 
   const data = await neisFetchJson("SchoolSchedule", {
     ATPT_OFCDC_SC_CODE: school.atpt,
