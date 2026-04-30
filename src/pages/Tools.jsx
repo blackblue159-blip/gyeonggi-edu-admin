@@ -43,11 +43,11 @@ export default function Tools() {
     },
     {
       num: 3,
-      title: "북마크 추가",
+      title: "페이지 추가",
       desc: (
         <>
           북마크바 빈 곳에서{" "}
-          <span className="font-medium text-[#37352f]">우클릭 → 북마크 추가</span>를 선택합니다.
+          <span className="font-medium text-[#37352f]">우클릭 → 페이지 추가</span>를 선택합니다.
         </>
       ),
     },
@@ -98,7 +98,7 @@ export default function Tools() {
                       {copyState === "copied" ? (
                         <>✓ 복사됐습니다</>
                       ) : copyState === "failed" ? (
-                        <>복사 실패 — 아래 코드 보기에서 직접 복사하세요</>
+                        <>복사 실패 — 다시 시도하거나 브라우저 권한을 확인하세요</>
                       ) : (
                         <>코드 복사</>
                       )}
@@ -108,19 +108,6 @@ export default function Tools() {
               </li>
             ))}
           </ol>
-
-          <details className="mt-5 rounded-lg border border-[#e9e9e7] bg-[#fbfbfa] p-3">
-            <summary className="cursor-pointer select-none text-sm font-medium text-[#37352f]">
-              코드 직접 복사 (버튼이 안 될 때)
-            </summary>
-            <p className="mt-2 text-xs text-[#787774]">아래 전체를 선택(<kbd className="rounded border border-[#d0cfc9] bg-white px-1 font-mono">Ctrl+A</kbd>)하고 복사하세요.</p>
-            <textarea
-              className="mt-2 h-28 w-full resize-none rounded-md border border-[#e9e9e7] bg-white px-3 py-2 font-mono text-[11px] text-[#37352f] outline-none focus:border-[#2383e2] focus:ring-2 focus:ring-[#2383e2]/20"
-              readOnly
-              value={bookmarkletCode}
-              onClick={(e) => e.target.select()}
-            />
-          </details>
         </div>
 
         {/* 사용 방법 */}
