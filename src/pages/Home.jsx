@@ -193,12 +193,14 @@ export default function Home() {
       <section className="mb-12">
         <div className="mb-3 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
-            <h1 className="mb-3 text-2xl font-semibold tracking-tight text-[#37352f] sm:text-3xl">
-              반복 업무를 줄여주는 도구들을 한곳에 모았습니다
+            <h1 className="mb-3 text-[20px] font-medium tracking-tight text-[#37352f]">
+              경기 교행 실무자를 위한 업무도우미
             </h1>
-            <p className="max-w-2xl text-sm leading-relaxed text-[#787774] sm:text-[15px]">
-              학사일정·행정 업무에 쓸 수 있는 캘린더와 카드 고지서 대조 등, 현장에서 바로 활용할 수 있는
-              도구를 차례로 연결해 갑니다.
+            <p
+              className="max-w-2xl leading-relaxed"
+              style={{ fontSize: 13, color: "var(--color-text-secondary)" }}
+            >
+              학교 현장에서 자주 필요한 행정 도구를 한곳에서 빠르게 사용할 수 있습니다.
             </p>
           </div>
           <div className="flex shrink-0 flex-col items-stretch lg:items-end">
