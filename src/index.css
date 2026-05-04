@@ -8,6 +8,12 @@
     "Segoe UI Symbol", sans-serif;
 }
 
+:root {
+  --color-background-primary: #ebebea;
+  --color-background-secondary: #fbfbfa;
+  --color-border-tertiary: rgba(55, 53, 47, 0.09);
+}
+
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

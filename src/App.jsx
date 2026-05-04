@@ -18,6 +18,7 @@ const Inventory = lazy(() => import("./pages/Inventory.jsx"));
 const Archive = lazy(() => import("./pages/Archive.jsx"));
 const Tools = lazy(() => import("./pages/Tools.jsx"));
 const TaskGuide = lazy(() => import("./pages/TaskGuide.jsx"));
+const Calendar = lazy(() => import("./pages/Calendar.jsx"));
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/school-info" element={<SchoolInfo />} />
           <Route path="/card-match" element={<CardMatch />} />
           <Route path="/guide" element={<TaskGuide />} />
+          <Route path="/calendar" element={<Calendar />} />
         </Route>
       </Routes>
     </Suspense>
