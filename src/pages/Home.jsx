@@ -143,6 +143,15 @@ export default function Home() {
             cta="설치 안내 보기"
           />
           <ToolCard
+            icon="📋"
+            title="업무별 월간 가이드"
+            description="급여·지출·세입 등 업무별 월간 할 일을 한눈에"
+            badges={["월간", "업무별", "가이드"]}
+            status="사용가능"
+            to="/guide"
+            cta="바로 가기"
+          />
+          <ToolCard
             icon="💳"
             title="카드 고지서 매칭"
             description="에듀파인 원인행위 목록과 카드 청구 내역을 대조합니다. 엑셀·CSV는 브라우저 안에서만 처리되며 서버로 전송되지 않습니다."
