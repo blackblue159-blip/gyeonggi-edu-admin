@@ -1,4 +1,117 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+
+const PORTAL_LINKS = [
+  { href: "https://klef.goe.go.kr/keris_ui/main.do", label: "🏛 에듀파인" },
+  { href: "https://goe.neis.go.kr/", label: "👤 나이스" },
+  { href: "https://goe.eduptl.kr/bpm_lgn_lg00_001.do?noEpSession", label: "📋 업무포털" },
+];
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function formatClock(d) {
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+}
+
+const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+function HomeDateTime() {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className="flex flex-col items-end">
+      <time
+        dateTime={now.toISOString()}
+        aria-live="polite"
+        className="tabular-nums"
+        style={{
+          fontSize: 22,
+          fontWeight: 500,
+          color: "var(--color-text-primary)",
+          fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          lineHeight: 1.2,
+        }}
+      >
+        {formatClock(now)}
+      </time>
+      <p
+        style={{
+          margin: "6px 0 0",
+          fontSize: 11,
+          color: "var(--color-text-tertiary)",
+          textAlign: "right",
+          lineHeight: 1.35,
+        }}
+      >
+        {dateFormatter.format(now)}
+      </p>
+    </div>
+  );
+}
+
+function PortalBadge({ href, children }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        fontSize: 11,
+        padding: "4px 10px",
+        borderRadius: 20,
+        border: hover
+          ? "0.5px solid var(--color-border-secondary)"
+          : "0.5px solid var(--color-border-tertiary)",
+        background: hover ? "var(--color-background-primary)" : "var(--color-background-secondary)",
+        color: "var(--color-text-secondary)",
+        cursor: "pointer",
+        textDecoration: "none",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+    </a>
+  );
+}
+
+function PortalBadges() {
+  return (
+    <div
+      className="mt-2"
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        justifyContent: "flex-end",
+        gap: 6,
+      }}
+    >
+      {PORTAL_LINKS.map((item) => (
+        <PortalBadge key={item.href} href={item.href}>
+          {item.label}
+        </PortalBadge>
+      ))}
+    </div>
+  );
+}
 
 /**
  * @param {object} props
@@ -7,14 +120,28 @@ import { Link } from "react-router-dom";
  * @param {string} props.description
  * @param {string | null} props.to
  * @param {string} props.cta
+ * @param {boolean} [props.showDraftBadge]
  */
-function ToolCard({ icon, title, description, to, cta }) {
+function ToolCard({ icon, title, description, to, cta, showDraftBadge }) {
   const inner = (
     <>
-      <div className="mb-3 flex items-start gap-3">
+      <div className="mb-3 flex items-start justify-between gap-2">
         <span className="text-2xl" aria-hidden>
           {icon}
         </span>
+        {showDraftBadge ? (
+          <span
+            className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold leading-tight"
+            style={{
+              color: "#9A3412",
+              background: "#FFFBEB",
+              border: "1px solid #FDE68A",
+            }}
+            title="내용 수정 중"
+          >
+            미완성 · 수정중
+          </span>
+        ) : null}
       </div>
       <h3 className="mb-2 text-base font-semibold text-[#37352f]">{title}</h3>
       <p className="mb-4 text-sm leading-relaxed text-[#787774]">{description}</p>
@@ -64,13 +191,21 @@ export default function Home() {
   return (
     <main className="mx-auto w-full max-w-4xl">
       <section className="mb-12">
-        <h1 className="mb-3 text-2xl font-semibold tracking-tight text-[#37352f] sm:text-3xl">
-          반복 업무를 줄여주는 도구들을 한곳에 모았습니다
-        </h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-[#787774] sm:text-[15px]">
-          학사일정·행정 업무에 쓸 수 있는 캘린더와 카드 고지서 대조 등, 현장에서 바로 활용할 수 있는 도구를
-          차례로 연결해 갑니다.
-        </p>
+        <div className="mb-3 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 flex-1">
+            <h1 className="mb-3 text-2xl font-semibold tracking-tight text-[#37352f] sm:text-3xl">
+              반복 업무를 줄여주는 도구들을 한곳에 모았습니다
+            </h1>
+            <p className="max-w-2xl text-sm leading-relaxed text-[#787774] sm:text-[15px]">
+              학사일정·행정 업무에 쓸 수 있는 캘린더와 카드 고지서 대조 등, 현장에서 바로 활용할 수 있는
+              도구를 차례로 연결해 갑니다.
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-col items-stretch lg:items-end">
+            <HomeDateTime />
+            <PortalBadges />
+          </div>
+        </div>
       </section>
 
       <section className="mb-10" aria-labelledby="standalone-heading">
@@ -91,6 +226,7 @@ export default function Home() {
             description="급여·지출·세입 등 업무별 월간 할 일을 한눈에"
             to="/guide"
             cta="바로 가기"
+            showDraftBadge
           />
         </div>
       </section>

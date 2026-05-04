@@ -65,6 +65,40 @@ export default function TaskGuide() {
       }}
     >
       <header style={{ marginBottom: 28 }}>
+        <div
+          role="status"
+          style={{
+            marginBottom: 16,
+            padding: "10px 14px",
+            borderRadius: 8,
+            background: "#FFFBEB",
+            border: "1px solid #FDE68A",
+            boxSizing: "border-box",
+          }}
+        >
+          <span
+            style={{
+              display: "inline-block",
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: "0.02em",
+              color: "#9A3412",
+            }}
+          >
+            미완성 · 수정중
+          </span>
+          <p
+            style={{
+              margin: "8px 0 0",
+              fontSize: 13,
+              lineHeight: 1.55,
+              color: "#78350F",
+            }}
+          >
+            월별 업무 데이터와 안내 문구는 아직 완성 단계가 아니며, 예고 없이 바뀔 수 있습니다. 참고용으로
+            이용해 주세요.
+          </p>
+        </div>
         <h1
           style={{
             margin: 0,

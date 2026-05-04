@@ -12,6 +12,10 @@
   --color-background-primary: #ebebea;
   --color-background-secondary: #fbfbfa;
   --color-border-tertiary: rgba(55, 53, 47, 0.09);
+  --color-border-secondary: rgba(55, 53, 47, 0.16);
+  --color-text-primary: #37352f;
+  --color-text-secondary: #787774;
+  --color-text-tertiary: #9b9a97;
 }
 
 html {

@@ -67,11 +67,22 @@ export function Sidebar() {
           </NavLink>
           <NavLink
             to="/guide"
-            className={({ isActive }) => navLinkClass(isActive)}
+            className={({ isActive }) => `${navLinkClass(isActive)} flex-wrap items-center gap-x-1 gap-y-1`}
             style={({ isActive }) => navLinkStyle(isActive)}
+            title="내용 수정 중"
           >
             <span aria-hidden>📋</span>
-            <span>업무별 월간 가이드</span>
+            <span className="min-w-0 flex-1 leading-snug">업무별 월간 가이드</span>
+            <span
+              className="shrink-0 rounded px-1 py-px text-[9px] font-semibold leading-tight"
+              style={{
+                color: "#9A3412",
+                background: "#FFFBEB",
+                border: "1px solid #FDE68A",
+              }}
+            >
+              미완성 · 수정중
+            </span>
           </NavLink>
 
           <button
