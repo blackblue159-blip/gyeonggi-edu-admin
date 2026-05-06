@@ -39,22 +39,30 @@ export function Sidebar() {
       <NavLink
         to="/"
         end
-        className={({ isActive }) => `${navLinkClass(isActive)} mb-1 block`}
+        className={({ isActive }) =>
+          [
+            "mb-1 flex w-full min-h-[76px] flex-col items-center justify-center gap-1 px-3 py-2 text-center text-[13px] text-[#37352f] no-underline transition-colors",
+            isActive ? "font-medium" : "font-normal hover:bg-black/[0.04]",
+          ].join(" ")
+        }
         style={({ isActive }) => ({
           ...navLinkStyle(isActive),
-          padding: "12px 14px 10px",
           borderRadius: 0,
           borderBottom: "1px solid var(--color-border-tertiary)",
         })}
       >
-        <div className="flex flex-col gap-0.5">
-          <span className="text-[13px] font-medium leading-snug text-[#37352f]">
-            경기교행 업무도우미
-          </span>
-          <span className="text-[11px] leading-snug" style={{ color: MUTED }}>
-            경기도 교육행정직 공무원
-          </span>
-        </div>
+        <span className="text-2xl leading-none" aria-hidden>
+          🏫
+        </span>
+        <span className="text-[13px] font-semibold leading-snug text-[#37352f]">
+          경기교행 업무도우미
+        </span>
+        <span
+          className="text-[11px] leading-snug"
+          style={{ color: "var(--color-text-tertiary)" }}
+        >
+          학교 행정 자동화 도구
+        </span>
       </NavLink>
 
       <nav
