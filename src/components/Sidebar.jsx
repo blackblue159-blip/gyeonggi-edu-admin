@@ -18,13 +18,11 @@ export function Sidebar() {
 
   return (
     <aside
-      className="print:hidden"
+      className="print:hidden hidden md:flex md:flex-col"
       style={{
         width: 280,
         height: "100vh",
         flexShrink: 0,
-        display: "flex",
-        flexDirection: "column",
         background: "#F3F4F1",
         borderRight: "1px solid #E5E7EB",
         boxSizing: "border-box",

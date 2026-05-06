@@ -278,7 +278,7 @@ export default function Home() {
         <SectionTitle id="tools-programs-heading">
           업무 도우미 프로그램
         </SectionTitle>
-        <div className="grid grid-cols-1 gap-4 sm:[grid-template-columns:repeat(2,minmax(250px,1fr))] lg:[grid-template-columns:repeat(4,minmax(250px,1fr))]">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <ToolCard
             icon="💳"
             title="카드 고지서 매칭"
