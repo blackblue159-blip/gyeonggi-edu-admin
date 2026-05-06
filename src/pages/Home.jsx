@@ -36,14 +36,14 @@ function HomeDateTime() {
   }, []);
 
   return (
-    <div className="flex flex-col items-end">
+    <div className="flex flex-col items-start md:items-end">
       <time
         dateTime={now.toISOString()}
         aria-live="polite"
         className="tabular-nums"
         style={{
-          fontSize: 19,
-          fontWeight: 500,
+          fontSize: 21,
+          fontWeight: 600,
           color: "var(--color-text-primary)",
           fontFamily:
             "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
@@ -53,11 +53,10 @@ function HomeDateTime() {
         {formatClock(now)}
       </time>
       <p
+        className="mt-1 text-left md:text-right"
         style={{
-          margin: "4px 0 0",
           fontSize: 11,
           color: "var(--color-text-tertiary)",
-          textAlign: "right",
           lineHeight: 1.35,
         }}
       >
@@ -101,15 +100,7 @@ function PortalBadge({ href, children }) {
 
 function PortalBadges() {
   return (
-    <div
-      className="mt-1.5"
-      style={{
-        display: "flex",
-        flexWrap: "wrap",
-        justifyContent: "flex-end",
-        gap: 6,
-      }}
-    >
+    <div className="mt-1.5 flex flex-wrap justify-start gap-1.5 md:justify-end">
       {PORTAL_LINKS.map((item) => (
         <PortalBadge key={item.href} href={item.href}>
           {item.label}
@@ -217,23 +208,24 @@ function SectionTitle({ id, children }) {
 export default function Home() {
   return (
     <main className="w-full">
-      <section className="mb-7">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0 flex-1">
-            <h1 className="mb-1.5 text-[20px] font-medium tracking-tight text-[#37352f]">
-              경기 교행 실무자를 위한 업무도우미
-            </h1>
-            <p
-              className="max-w-2xl leading-relaxed"
-              style={{ fontSize: 13, color: "var(--color-text-secondary)" }}
-            >
-              학교 현장에서 자주 필요한 행정 도구를 한곳에서 빠르게 사용할 수
-              있습니다.
-            </p>
-          </div>
-          <div className="flex shrink-0 flex-col items-stretch lg:items-end">
-            <HomeDateTime />
-            <PortalBadges />
+      <section className="mb-7" aria-label="포털 요약">
+        <div className="rounded-lg border border-[#e9e9e7] bg-[#fbfbfa] p-5 md:p-6">
+          <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between md:gap-6">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-[20px] font-semibold leading-snug tracking-tight text-[#37352f] md:text-[21px]">
+                필요한 행정 도구를 바로 사용하세요
+              </h1>
+              <p
+                className="mt-1.5 max-w-2xl leading-relaxed"
+                style={{ fontSize: 13, color: "var(--color-text-secondary)" }}
+              >
+                학교 현장에서 자주 쓰는 업무도구를 한 화면에서 확인합니다.
+              </p>
+            </div>
+            <div className="flex w-full shrink-0 flex-col gap-2 md:w-auto md:items-end">
+              <HomeDateTime />
+              <PortalBadges />
+            </div>
           </div>
         </div>
       </section>
