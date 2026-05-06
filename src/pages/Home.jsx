@@ -42,7 +42,7 @@ function HomeDateTime() {
         aria-live="polite"
         className="tabular-nums"
         style={{
-          fontSize: 22,
+          fontSize: 19,
           fontWeight: 500,
           color: "var(--color-text-primary)",
           fontFamily:
@@ -54,7 +54,7 @@ function HomeDateTime() {
       </time>
       <p
         style={{
-          margin: "6px 0 0",
+          margin: "4px 0 0",
           fontSize: 11,
           color: "var(--color-text-tertiary)",
           textAlign: "right",
@@ -102,7 +102,7 @@ function PortalBadge({ href, children }) {
 function PortalBadges() {
   return (
     <div
-      className="mt-2"
+      className="mt-1.5"
       style={{
         display: "flex",
         flexWrap: "wrap",
@@ -127,8 +127,14 @@ function PortalBadges() {
  * @param {string | null} props.to
  * @param {string} props.cta
  * @param {boolean} [props.showDraftBadge]
+ * @param {boolean} [props.featured]
  */
-function ToolCard({ icon, title, description, to, cta, showDraftBadge }) {
+function ToolCard({ icon, title, description, to, cta, showDraftBadge, featured }) {
+  const pad = featured ? "p-6" : "p-5";
+  const titleClass = featured
+    ? "mb-2 text-lg font-semibold text-[#37352f]"
+    : "mb-2 text-base font-semibold text-[#37352f]";
+
   const inner = (
     <>
       <div className="mb-3 flex items-start justify-between gap-2">
@@ -149,7 +155,7 @@ function ToolCard({ icon, title, description, to, cta, showDraftBadge }) {
           </span>
         ) : null}
       </div>
-      <h3 className="mb-2 text-base font-semibold text-[#37352f]">{title}</h3>
+      <h3 className={titleClass}>{title}</h3>
       <p className="mb-4 text-sm leading-relaxed text-[#787774]">
         {description}
       </p>
@@ -166,7 +172,9 @@ function ToolCard({ icon, title, description, to, cta, showDraftBadge }) {
 
   if (!to) {
     return (
-      <div className="rounded-xl border border-[#e9e9e7] bg-[#fbfbfa] p-5 text-[#9b9a97] shadow-[0_1px_2px_rgba(15,15,15,0.04)]">
+      <div
+        className={`rounded-lg border border-[#e9e9e7] bg-[#fbfbfa] text-[#9b9a97] ${pad}`}
+      >
         {inner}
       </div>
     );
@@ -175,7 +183,7 @@ function ToolCard({ icon, title, description, to, cta, showDraftBadge }) {
   return (
     <Link
       to={to}
-      className="block rounded-xl border border-[#e9e9e7] bg-white p-5 shadow-[0_1px_2px_rgba(15,15,15,0.04)] transition hover:border-[#d3d3d0] hover:shadow-[0_2px_8px_rgba(15,15,15,0.06)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2383e2]"
+      className={`block rounded-lg border border-[#e9e9e7] bg-white transition hover:border-[#d3d3d0] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2383e2] ${pad}`}
     >
       {inner}
     </Link>
@@ -203,15 +211,14 @@ export default function Home() {
     <main className="w-full">
       <div
         style={{
-          maxWidth: 860,
+          maxWidth: 1240,
           width: "100%",
-          margin: "0 auto",
         }}
       >
-        <section className="mb-12">
-          <div className="mb-3 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <section className="mb-7">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0 flex-1">
-              <h1 className="mb-3 text-[20px] font-medium tracking-tight text-[#37352f]">
+              <h1 className="mb-1.5 text-[20px] font-medium tracking-tight text-[#37352f]">
                 경기 교행 실무자를 위한 업무도우미
               </h1>
               <p
@@ -229,17 +236,16 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mb-10" aria-labelledby="standalone-heading">
-          <h2 id="standalone-heading" className="sr-only">
-            바로 사용
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
+        <section className="mb-10" aria-labelledby="primary-tools-heading">
+          <SectionTitle id="primary-tools-heading">주요 도구</SectionTitle>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
             <ToolCard
               icon="🏫"
               title="학교 정보 조회"
               description="학교를 검색해 이번 달 학사일정을 달력으로 보고, 날짜를 눌러 중식 급식을 확인합니다."
               to="/school-info"
               cta="바로 가기"
+              featured
             />
             <ToolCard
               icon="📋"
@@ -248,6 +254,7 @@ export default function Home() {
               to="/guide"
               cta="바로 가기"
               showDraftBadge
+              featured
             />
           </div>
         </section>
@@ -256,7 +263,7 @@ export default function Home() {
           <SectionTitle id="tools-programs-heading">
             업무 도우미 프로그램
           </SectionTitle>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <ToolCard
               icon="💳"
               title="카드 고지서 매칭"
@@ -290,7 +297,7 @@ export default function Home() {
 
         <section className="mb-10" aria-labelledby="tools-soon-heading">
           <SectionTitle id="tools-soon-heading">준비중</SectionTitle>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <ToolCard
               icon="🗓"
               title="교육행정직 업무 캘린더"
