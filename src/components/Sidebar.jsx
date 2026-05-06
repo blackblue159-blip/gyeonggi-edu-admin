@@ -26,7 +26,7 @@ export function Sidebar() {
     <aside
       className="print:hidden"
       style={{
-        width: 220,
+        width: 248,
         height: "100vh",
         flexShrink: 0,
         display: "flex",
@@ -48,14 +48,19 @@ export function Sidebar() {
         })}
       >
         <div className="flex flex-col gap-0.5">
-          <span className="text-[13px] font-medium leading-snug text-[#37352f]">경기교행 업무도우미</span>
+          <span className="text-[13px] font-medium leading-snug text-[#37352f]">
+            경기교행 업무도우미
+          </span>
           <span className="text-[11px] leading-snug" style={{ color: MUTED }}>
             경기도 교육행정직 공무원
           </span>
         </div>
       </NavLink>
 
-      <nav className="flex flex-1 flex-col gap-0.5 overflow-hidden px-2 pb-3 pt-2" aria-label="주요 메뉴">
+      <nav
+        className="flex flex-1 flex-col gap-0.5 overflow-hidden px-2 pb-3 pt-2"
+        aria-label="주요 메뉴"
+      >
         <div className="flex flex-1 flex-col overflow-hidden">
           <NavLink
             to="/school-info"
@@ -67,12 +72,16 @@ export function Sidebar() {
           </NavLink>
           <NavLink
             to="/guide"
-            className={({ isActive }) => `${navLinkClass(isActive)} flex-wrap items-center gap-x-1 gap-y-1`}
+            className={({ isActive }) =>
+              `${navLinkClass(isActive)} flex-wrap items-center gap-x-1 gap-y-1`
+            }
             style={({ isActive }) => navLinkStyle(isActive)}
             title="내용 수정 중"
           >
             <span aria-hidden>📋</span>
-            <span className="min-w-0 flex-1 leading-snug">업무별 월간 가이드</span>
+            <span className="min-w-0 flex-1 leading-snug">
+              업무별 월간 가이드
+            </span>
             <span
               className="shrink-0 rounded px-1 py-px text-[9px] font-semibold leading-tight"
               style={{
@@ -93,13 +102,19 @@ export function Sidebar() {
             aria-controls="sidebar-folder-programs"
             onClick={() => setProgramsOpen((o) => !o)}
           >
-            <span className="w-4 shrink-0 text-center text-[10px] text-[#787774]" aria-hidden>
+            <span
+              className="w-4 shrink-0 text-center text-[10px] text-[#787774]"
+              aria-hidden
+            >
               {programsOpen ? "▾" : "▸"}
             </span>
             <span>업무 도우미 프로그램</span>
           </button>
           {programsOpen ? (
-            <div id="sidebar-folder-programs" className="flex flex-col gap-0.5 pb-1">
+            <div
+              id="sidebar-folder-programs"
+              className="flex flex-col gap-0.5 pb-1"
+            >
               <NavLink
                 to="/card-match"
                 className={({ isActive }) => `${navLinkClass(isActive)} pl-5`}
@@ -143,7 +158,10 @@ export function Sidebar() {
             aria-controls="sidebar-folder-coming"
             onClick={() => setComingSoonOpen((o) => !o)}
           >
-            <span className="w-4 shrink-0 text-center text-[10px] text-[#787774]" aria-hidden>
+            <span
+              className="w-4 shrink-0 text-center text-[10px] text-[#787774]"
+              aria-hidden
+            >
               {comingSoonOpen ? "▾" : "▸"}
             </span>
             <span>준비중</span>

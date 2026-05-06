@@ -7,8 +7,13 @@ export function Layout() {
     <div className="flex h-[100dvh] min-h-0 overflow-hidden font-sans print:block">
       <Sidebar />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <div className="min-h-0 flex-1 overflow-y-auto px-10 py-8">
-          <Outlet />
+        <div
+          className="min-h-0 flex-1 overflow-y-auto py-8"
+          style={{ paddingLeft: 40, paddingRight: 40 }}
+        >
+          <div className="w-full max-w-[1320px] pb-28">
+            <Outlet />
+          </div>
         </div>
         <Footer />
       </div>
