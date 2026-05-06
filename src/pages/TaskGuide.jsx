@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ALL_TASKS } from "../data/tasks/index.js";
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -23,14 +23,89 @@ function isWarningLine(text) {
   return String(text ?? "").trimStart().startsWith("⚠️");
 }
 
+function TaskGroupBlocks({ groups, groupKeyPrefix }) {
+  return (
+    <div>
+      {groups.map((group, gIdx) => (
+        <div
+          key={`${groupKeyPrefix}-g-${gIdx}`}
+          style={{ marginBottom: gIdx < groups.length - 1 ? 16 : 0 }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 8,
+              padding: "8px 10px",
+              borderRadius: 8,
+              background: TITLE_BOX_BG,
+              marginBottom: 8,
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                marginTop: 5,
+                flexShrink: 0,
+                width: 5,
+                height: 5,
+                borderRadius: "50%",
+                background: DOT_GREEN,
+              }}
+            />
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 500,
+                color: TEXT_PRIMARY,
+                lineHeight: 1.45,
+              }}
+            >
+              {group.title}
+            </span>
+          </div>
+          {Array.isArray(group.children) && group.children.length > 0 ? (
+            <div
+              style={{
+                marginLeft: 4,
+                paddingLeft: 12,
+                borderLeft: CHILD_BORDER,
+              }}
+            >
+              {group.children.map((child, cIdx) => (
+                <p
+                  key={cIdx}
+                  style={{
+                    margin: cIdx > 0 ? "6px 0 0" : 0,
+                    fontSize: 11,
+                    lineHeight: 1.55,
+                    color: isWarningLine(child) ? WARNING_COLOR : TEXT_SECONDARY,
+                  }}
+                >
+                  {child}
+                </p>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function TaskGuide() {
   const [selectedId, setSelectedId] = useState(() => ALL_TASKS[0]?.id ?? "");
   const [hoveredTaskId, setHoveredTaskId] = useState(null);
+  const [monthlyPanelOpen, setMonthlyPanelOpen] = useState(true);
 
   const selectedTask = useMemo(
     () => ALL_TASKS.find((t) => t.id === selectedId) ?? ALL_TASKS[0],
     [selectedId],
   );
+
+  useEffect(() => {
+    setMonthlyPanelOpen(true);
+  }, [selectedTask?.id]);
 
   const currentMonth = currentMonthNumber();
 
@@ -196,6 +271,64 @@ export default function TaskGuide() {
         </h2>
       </div>
 
+      {Array.isArray(selectedTask.monthly) && selectedTask.monthly.length > 0 ? (
+        <section
+          aria-label="상시·수시 업무"
+          style={{
+            marginBottom: 20,
+            padding: "12px 16px",
+            boxSizing: "border-box",
+            background: "var(--color-background-secondary)",
+            border: "0.5px solid var(--color-border-tertiary)",
+            borderRadius: "var(--border-radius-lg)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              marginBottom: monthlyPanelOpen ? 12 : 0,
+            }}
+          >
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 500,
+                color: TEXT_PRIMARY,
+                lineHeight: 1.4,
+              }}
+            >
+              📌 상시·수시 업무
+            </span>
+            <button
+              type="button"
+              aria-expanded={monthlyPanelOpen}
+              onClick={() => setMonthlyPanelOpen((open) => !open)}
+              style={{
+                flexShrink: 0,
+                margin: 0,
+                padding: "4px 0",
+                border: "none",
+                background: "transparent",
+                font: "inherit",
+                fontSize: 12,
+                fontWeight: 500,
+                color: TEXT_SECONDARY,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {monthlyPanelOpen ? "접기 ▾" : "펼치기 ▸"}
+            </button>
+          </div>
+          {monthlyPanelOpen ? (
+            <TaskGroupBlocks groups={selectedTask.monthly} groupKeyPrefix="monthly" />
+          ) : null}
+        </section>
+      ) : null}
+
       <div
         style={{
           display: "grid",
@@ -254,71 +387,7 @@ export default function TaskGuide() {
                   등록된 업무가 없습니다
                 </p>
               ) : (
-                <div>
-                  {items.map((group, gIdx) => (
-                    <div
-                      key={`${month}-g-${gIdx}`}
-                      style={{ marginBottom: gIdx < items.length - 1 ? 16 : 0 }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          gap: 8,
-                          padding: "8px 10px",
-                          borderRadius: 8,
-                          background: TITLE_BOX_BG,
-                          marginBottom: 8,
-                        }}
-                      >
-                        <span
-                          aria-hidden
-                          style={{
-                            marginTop: 5,
-                            flexShrink: 0,
-                            width: 5,
-                            height: 5,
-                            borderRadius: "50%",
-                            background: DOT_GREEN,
-                          }}
-                        />
-                        <span
-                          style={{
-                            fontSize: 12,
-                            fontWeight: 500,
-                            color: TEXT_PRIMARY,
-                            lineHeight: 1.45,
-                          }}
-                        >
-                          {group.title}
-                        </span>
-                      </div>
-                      {Array.isArray(group.children) && group.children.length > 0 ? (
-                        <div
-                          style={{
-                            marginLeft: 4,
-                            paddingLeft: 12,
-                            borderLeft: CHILD_BORDER,
-                          }}
-                        >
-                          {group.children.map((child, cIdx) => (
-                            <p
-                              key={cIdx}
-                              style={{
-                                margin: cIdx > 0 ? "6px 0 0" : 0,
-                                fontSize: 11,
-                                lineHeight: 1.55,
-                                color: isWarningLine(child) ? WARNING_COLOR : TEXT_SECONDARY,
-                              }}
-                            >
-                              {child}
-                            </p>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
+                <TaskGroupBlocks groups={items} groupKeyPrefix={`m-${month}`} />
               )}
             </section>
           );

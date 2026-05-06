@@ -2,6 +2,7 @@
   "id": "세입",
   "label": "세입",
   "icon": "💵",
+  "monthly": [],
   "months": {
     "1": [
       {
