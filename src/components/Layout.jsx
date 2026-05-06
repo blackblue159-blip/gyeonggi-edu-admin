@@ -9,9 +9,9 @@ export function Layout() {
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <div
           className="min-h-0 flex-1 overflow-y-auto py-8"
-          style={{ paddingLeft: 40, paddingRight: 40 }}
+          style={{ paddingLeft: 56, paddingRight: 56 }}
         >
-          <div className="w-full max-w-[1320px] pb-28">
+          <div className="mx-auto w-full max-w-[1060px] pb-28">
             <Outlet />
           </div>
         </div>

@@ -26,7 +26,7 @@ export function Sidebar() {
     <aside
       className="print:hidden"
       style={{
-        width: 248,
+        width: 280,
         height: "100vh",
         flexShrink: 0,
         display: "flex",
