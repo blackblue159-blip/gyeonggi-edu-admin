@@ -10,13 +10,22 @@
 
 :root {
   --color-background-primary: #ebebea;
-  --color-background-secondary: #fbfbfa;
+  --color-background-secondary: #f3f4f1;
   --border-radius-lg: 10px;
   --color-border-tertiary: rgba(55, 53, 47, 0.09);
   --color-border-secondary: rgba(55, 53, 47, 0.16);
-  --color-text-primary: #37352f;
-  --color-text-secondary: #787774;
-  --color-text-tertiary: #9b9a97;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-tertiary: #9ca3af;
+  --app-page-bg: #fafaf8;
+  --app-sidebar-bg: #f3f4f1;
+  --app-card-bg: #ffffff;
+  --app-border: #e5e7eb;
+  --app-command-bg: #f8fbff;
+  --app-command-border: #dbeafe;
+  --app-primary: #2563eb;
+  --app-primary-hover: #1d4ed8;
+  --app-muted: #6b7280;
 }
 
 html {
@@ -28,6 +37,6 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--font-sans);
-  background-color: #ffffff;
-  color: #37352f;
+  background-color: var(--app-page-bg);
+  color: var(--color-text-primary);
 }

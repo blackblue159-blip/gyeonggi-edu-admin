@@ -44,7 +44,7 @@ function HomeDateTime() {
         style={{
           fontSize: 21,
           fontWeight: 600,
-          color: "var(--color-text-primary)",
+          color: "#111827",
           fontFamily:
             "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
           lineHeight: 1.2,
@@ -56,7 +56,7 @@ function HomeDateTime() {
         className="mt-1 text-left md:text-right"
         style={{
           fontSize: 11,
-          color: "var(--color-text-tertiary)",
+          color: "#6B7280",
           lineHeight: 1.35,
         }}
       >
@@ -81,13 +81,9 @@ function PortalBadge({ href, children }) {
         fontSize: 11,
         padding: "4px 10px",
         borderRadius: 20,
-        border: hover
-          ? "0.5px solid var(--color-border-secondary)"
-          : "0.5px solid var(--color-border-tertiary)",
-        background: hover
-          ? "var(--color-background-primary)"
-          : "var(--color-background-secondary)",
-        color: "var(--color-text-secondary)",
+        border: hover ? "1px solid #BFDBFE" : "1px solid #E5E7EB",
+        background: hover ? "#F8FAFC" : "#FFFFFF",
+        color: "#6B7280",
         cursor: "pointer",
         textDecoration: "none",
         whiteSpace: "nowrap",
@@ -119,7 +115,22 @@ function PortalBadges() {
  * @param {string} props.cta
  * @param {boolean} [props.showDraftBadge]
  * @param {boolean} [props.featured]
+ * @param {"blue"|"indigo"|"teal"|"amber"|"slate"} [props.accent]
  */
+const ACCENT_BAR = {
+  blue: "#2563EB",
+  indigo: "#4F46E5",
+  teal: "#0D9488",
+  amber: "#D97706",
+  slate: "#94A3B8",
+};
+
+function toolCardTopColor(featured, accent) {
+  if (featured) return ACCENT_BAR.blue;
+  if (accent && ACCENT_BAR[accent]) return ACCENT_BAR[accent];
+  return ACCENT_BAR.slate;
+}
+
 function ToolCard({
   icon,
   title,
@@ -128,11 +139,13 @@ function ToolCard({
   cta,
   showDraftBadge,
   featured,
+  accent,
 }) {
   const pad = featured ? "p-6" : "p-5";
   const titleClass = featured
-    ? "mb-2 text-lg font-semibold text-[#37352f]"
-    : "mb-2 text-base font-semibold text-[#37352f]";
+    ? "mb-2 text-lg font-semibold text-[#111827]"
+    : "mb-2 text-base font-semibold text-[#111827]";
+  const barColor = toolCardTopColor(!!featured, accent);
 
   const inner = (
     <>
@@ -155,10 +168,10 @@ function ToolCard({
         ) : null}
       </div>
       <h3 className={titleClass}>{title}</h3>
-      <p className="mb-4 text-sm leading-relaxed text-[#787774]">
+      <p className="mb-4 text-sm leading-relaxed text-[#6B7280]">
         {description}
       </p>
-      <span className="inline-flex items-center text-sm font-medium text-[#2383e2]">
+      <span className="inline-flex items-center text-sm font-medium text-[#2563EB] transition-colors group-hover:text-[#1D4ED8]">
         {cta}
         {to ? (
           <span className="ml-1" aria-hidden>
@@ -171,10 +184,13 @@ function ToolCard({
 
   if (!to) {
     return (
-      <div
-        className={`rounded-lg border border-[#e9e9e7] bg-[#fbfbfa] text-[#9b9a97] ${pad}`}
-      >
-        {inner}
+      <div className="group relative block overflow-hidden rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280] transition-colors hover:border-[#BFDBFE] hover:bg-[#F8FAFC]">
+        <div
+          className="h-[3px] w-full shrink-0"
+          style={{ backgroundColor: barColor }}
+          aria-hidden
+        />
+        <div className={pad}>{inner}</div>
       </div>
     );
   }
@@ -182,9 +198,14 @@ function ToolCard({
   return (
     <Link
       to={to}
-      className={`block rounded-lg border border-[#e9e9e7] bg-white transition hover:border-[#d3d3d0] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2383e2] ${pad}`}
+      className={`group relative block overflow-hidden rounded-lg border border-[#E5E7EB] bg-white transition-colors hover:border-[#BFDBFE] hover:bg-[#F8FAFC] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]`}
     >
-      {inner}
+      <div
+        className="h-[3px] w-full shrink-0"
+        style={{ backgroundColor: barColor }}
+        aria-hidden
+      />
+      <div className={pad}>{inner}</div>
     </Link>
   );
 }
@@ -198,7 +219,7 @@ function SectionTitle({ id, children }) {
   return (
     <h2
       id={id}
-      className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#9b9a97]"
+      className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#6B7280]"
     >
       {children}
     </h2>
@@ -209,22 +230,22 @@ export default function Home() {
   return (
     <main className="w-full">
       <section className="mb-7" aria-label="포털 요약">
-        <div className="rounded-lg border border-[#e9e9e7] bg-[#fbfbfa] p-5 md:p-6">
-          <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between md:gap-6">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-[20px] font-semibold leading-snug tracking-tight text-[#37352f] md:text-[21px]">
-                필요한 행정 도구를 바로 사용하세요
-              </h1>
-              <p
-                className="mt-1.5 max-w-2xl leading-relaxed"
-                style={{ fontSize: 13, color: "var(--color-text-secondary)" }}
-              >
-                학교 현장에서 자주 쓰는 업무도구를 한 화면에서 확인합니다.
-              </p>
-            </div>
-            <div className="flex w-full shrink-0 flex-col gap-2 md:w-auto md:items-end">
-              <HomeDateTime />
-              <PortalBadges />
+        <div className="flex overflow-hidden rounded-lg border border-[#DBEAFE] bg-[#F8FBFF]">
+          <div className="w-1 shrink-0 bg-[#2563EB]" aria-hidden />
+          <div className="min-w-0 flex-1 p-5 md:p-6">
+            <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between md:gap-6">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-[20px] font-semibold leading-snug tracking-tight text-[#111827] md:text-[21px]">
+                  필요한 행정 도구를 바로 사용하세요
+                </h1>
+                <p className="mt-1.5 max-w-2xl text-[13px] leading-relaxed text-[#6B7280]">
+                  학교 현장에서 자주 쓰는 업무도구를 한 화면에서 확인합니다.
+                </p>
+              </div>
+              <div className="flex w-full shrink-0 flex-col gap-2 md:w-auto md:items-end">
+                <HomeDateTime />
+                <PortalBadges />
+              </div>
             </div>
           </div>
         </div>
@@ -264,6 +285,7 @@ export default function Home() {
             description="에듀파인 원인행위 목록과 카드 청구 내역을 대조합니다. 엑셀·CSV는 브라우저 안에서만 처리됩니다."
             to="/card-match"
             cta="바로 가기"
+            accent="blue"
           />
           <ToolCard
             icon="🔢"
@@ -271,6 +293,7 @@ export default function Home() {
             description="취득가격·내용연수·사용연수를 입력해 경제적 수리한계 금액을 계산합니다."
             to="/calculator"
             cta="바로 가기"
+            accent="indigo"
           />
           <ToolCard
             icon="📦"
@@ -278,6 +301,7 @@ export default function Home() {
             description="엑셀을 불러와 검색·상태 분류·수리한계 계산·요약 차트·보내기를 한 번에 처리합니다."
             to="/inventory"
             cta="바로 가기"
+            accent="teal"
           />
           <ToolCard
             icon="🗂"
@@ -285,6 +309,7 @@ export default function Home() {
             description="한 줄에 하나씩 입력하고, 10행 구조 편철 옆면 표지를 미리보기·인쇄합니다. 데이터는 이 기기의 localStorage에만 저장됩니다."
             to="/archive"
             cta="바로 가기"
+            accent="amber"
           />
         </div>
       </section>
@@ -298,6 +323,7 @@ export default function Home() {
             description="NEIS 학사일정 연동, 월간·주간 뷰, 칸반 스타일 업무 관리. 소개·연결 페이지를 준비 중입니다."
             to="/calendar"
             cta="안내 보기"
+            accent="slate"
           />
           <ToolCard
             icon="🛒"
@@ -305,12 +331,13 @@ export default function Home() {
             description="지마켓 장바구니에서 키워드로 원하는 품목만 자동 체크하는 북마클릿 설치 안내입니다."
             to="/tools"
             cta="설치 안내 보기"
+            accent="slate"
           />
         </div>
       </section>
 
-      <section className="rounded-lg border border-dashed border-[#e9e9e7] bg-[#fbfbfa] p-4 text-sm text-[#787774]">
-        <p className="font-medium text-[#37352f]">최근 업데이트</p>
+      <section className="rounded-lg border border-dashed border-[#E5E7EB] bg-white p-4 text-sm text-[#6B7280]">
+        <p className="font-medium text-[#111827]">최근 업데이트</p>
         <p className="mt-1">카드 고지서 매칭 웹앱 오픈</p>
       </section>
     </main>

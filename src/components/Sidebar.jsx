@@ -1,21 +1,15 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 
-const MUTED = "#9b9a97";
+const MUTED = "#6B7280";
 
 function navLinkClass(isActive) {
   const base =
-    "flex w-full items-center gap-2 rounded-[6px] px-2 py-[6px] text-left text-[13px] text-[#37352f] no-underline transition-colors";
+    "flex w-full items-center gap-2 rounded-[6px] border-l-[3px] border-l-transparent px-2 py-[6px] pl-[7px] text-left text-[13px] no-underline transition-colors";
   if (isActive) {
-    return `${base} font-medium`;
+    return `${base} border-l-[#2563EB] bg-[#EFF6FF] font-medium text-[#1D4ED8]`;
   }
-  return `${base} font-normal hover:bg-black/[0.04]`;
-}
-
-function navLinkStyle(isActive) {
-  return isActive
-    ? { background: "var(--color-background-primary)", fontWeight: 500 }
-    : { background: "transparent", fontWeight: 400 };
+  return `${base} font-normal text-[#374151] hover:bg-blue-50/80`;
 }
 
 export function Sidebar() {
@@ -31,8 +25,8 @@ export function Sidebar() {
         flexShrink: 0,
         display: "flex",
         flexDirection: "column",
-        background: "var(--color-background-secondary)",
-        borderRight: "0.5px solid var(--color-border-tertiary)",
+        background: "#F3F4F1",
+        borderRight: "1px solid #E5E7EB",
         boxSizing: "border-box",
       }}
     >
@@ -41,28 +35,34 @@ export function Sidebar() {
         end
         className={({ isActive }) =>
           [
-            "mb-1 flex w-full min-h-[76px] flex-col items-center justify-center gap-1 px-3 py-2 text-center text-[13px] text-[#37352f] no-underline transition-colors",
-            isActive ? "font-medium" : "font-normal hover:bg-black/[0.04]",
+            "mb-1 flex w-full min-h-[76px] flex-col items-center justify-center gap-1 border-l-[3px] px-3 py-2 text-center text-[13px] no-underline transition-colors",
+            isActive
+              ? "border-l-[#2563EB] bg-[#EFF6FF] font-medium"
+              : "border-l-transparent font-normal hover:bg-blue-50/80",
           ].join(" ")
         }
-        style={({ isActive }) => ({
-          ...navLinkStyle(isActive),
+        style={{
           borderRadius: 0,
-          borderBottom: "1px solid var(--color-border-tertiary)",
-        })}
+          borderBottom: "1px solid #E5E7EB",
+        }}
       >
-        <span className="text-2xl leading-none" aria-hidden>
-          🏫
-        </span>
-        <span className="text-[13px] font-semibold leading-snug text-[#37352f]">
-          경기교행 업무도우미
-        </span>
-        <span
-          className="text-[11px] leading-snug"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          학교 행정 자동화 도구
-        </span>
+        {({ isActive }) => (
+          <>
+            <span className="text-2xl leading-none" aria-hidden>
+              🏫
+            </span>
+            <span
+              className={`text-[13px] font-semibold leading-snug ${isActive ? "text-[#1D4ED8]" : "text-[#111827]"}`}
+            >
+              경기교행 업무도우미
+            </span>
+            <span
+              className={`text-[11px] leading-snug ${isActive ? "text-[#2563EB]" : "text-[#6B7280]"}`}
+            >
+              학교 행정 자동화 도구
+            </span>
+          </>
+        )}
       </NavLink>
 
       <nav
@@ -73,7 +73,6 @@ export function Sidebar() {
           <NavLink
             to="/school-info"
             className={({ isActive }) => navLinkClass(isActive)}
-            style={({ isActive }) => navLinkStyle(isActive)}
           >
             <span aria-hidden>🏫</span>
             <span>학교 정보 조회</span>
@@ -83,7 +82,6 @@ export function Sidebar() {
             className={({ isActive }) =>
               `${navLinkClass(isActive)} flex-wrap items-center gap-x-1 gap-y-1`
             }
-            style={({ isActive }) => navLinkStyle(isActive)}
             title="내용 수정 중"
           >
             <span aria-hidden>📋</span>
@@ -104,14 +102,14 @@ export function Sidebar() {
 
           <button
             type="button"
-            className="mb-0.5 mt-3 flex w-full items-center gap-1 rounded-[6px] px-2 py-[6px] text-left font-medium uppercase tracking-wide hover:bg-black/[0.04]"
+            className="mb-0.5 mt-3 flex w-full items-center gap-1 rounded-[6px] px-2 py-[6px] text-left font-medium uppercase tracking-wide hover:bg-blue-50/80"
             style={{ background: "transparent", fontSize: 11, color: MUTED }}
             aria-expanded={programsOpen}
             aria-controls="sidebar-folder-programs"
             onClick={() => setProgramsOpen((o) => !o)}
           >
             <span
-              className="w-4 shrink-0 text-center text-[10px] text-[#787774]"
+              className="w-4 shrink-0 text-center text-[10px] text-[#6B7280]"
               aria-hidden
             >
               {programsOpen ? "▾" : "▸"}
@@ -126,7 +124,6 @@ export function Sidebar() {
               <NavLink
                 to="/card-match"
                 className={({ isActive }) => `${navLinkClass(isActive)} pl-5`}
-                style={({ isActive }) => navLinkStyle(isActive)}
               >
                 <span aria-hidden>💳</span>
                 <span>카드 고지서 매칭</span>
@@ -134,7 +131,6 @@ export function Sidebar() {
               <NavLink
                 to="/calculator"
                 className={({ isActive }) => `${navLinkClass(isActive)} pl-5`}
-                style={({ isActive }) => navLinkStyle(isActive)}
               >
                 <span aria-hidden>🔢</span>
                 <span>경제적 수리한계 계산기</span>
@@ -142,7 +138,6 @@ export function Sidebar() {
               <NavLink
                 to="/inventory"
                 className={({ isActive }) => `${navLinkClass(isActive)} pl-5`}
-                style={({ isActive }) => navLinkStyle(isActive)}
               >
                 <span aria-hidden>📦</span>
                 <span>물품대장</span>
@@ -150,7 +145,6 @@ export function Sidebar() {
               <NavLink
                 to="/archive"
                 className={({ isActive }) => `${navLinkClass(isActive)} pl-5`}
-                style={({ isActive }) => navLinkStyle(isActive)}
               >
                 <span aria-hidden>🗂</span>
                 <span>편철 표지</span>
@@ -160,14 +154,14 @@ export function Sidebar() {
 
           <button
             type="button"
-            className="mb-0.5 mt-3 flex w-full items-center gap-1 rounded-[6px] px-2 py-[6px] text-left font-medium uppercase tracking-wide hover:bg-black/[0.04]"
+            className="mb-0.5 mt-3 flex w-full items-center gap-1 rounded-[6px] px-2 py-[6px] text-left font-medium uppercase tracking-wide hover:bg-blue-50/80"
             style={{ background: "transparent", fontSize: 11, color: MUTED }}
             aria-expanded={comingSoonOpen}
             aria-controls="sidebar-folder-coming"
             onClick={() => setComingSoonOpen((o) => !o)}
           >
             <span
-              className="w-4 shrink-0 text-center text-[10px] text-[#787774]"
+              className="w-4 shrink-0 text-center text-[10px] text-[#6B7280]"
               aria-hidden
             >
               {comingSoonOpen ? "▾" : "▸"}
@@ -179,7 +173,6 @@ export function Sidebar() {
               <NavLink
                 to="/calendar"
                 className={({ isActive }) => `${navLinkClass(isActive)} pl-5`}
-                style={({ isActive }) => navLinkStyle(isActive)}
               >
                 <span aria-hidden>🗓</span>
                 <span>업무 캘린더</span>
@@ -187,7 +180,6 @@ export function Sidebar() {
               <NavLink
                 to="/tools"
                 className={({ isActive }) => `${navLinkClass(isActive)} pl-5`}
-                style={({ isActive }) => navLinkStyle(isActive)}
               >
                 <span aria-hidden>🛒</span>
                 <span>지마켓 장바구니 선택기</span>
