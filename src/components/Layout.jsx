@@ -1,5 +1,4 @@
 import { Outlet } from "react-router-dom";
-import { Footer } from "./Footer.jsx";
 import { Sidebar } from "./Sidebar.jsx";
 
 export function Layout() {
@@ -11,11 +10,10 @@ export function Layout() {
           className="min-h-0 flex-1 overflow-y-auto py-8"
           style={{ paddingLeft: 56, paddingRight: 56 }}
         >
-          <div className="mx-auto w-full max-w-[1060px] pb-28">
+          <div className="mx-auto w-full max-w-[1060px] pb-10">
             <Outlet />
           </div>
         </div>
-        <Footer />
       </div>
     </div>
   );
