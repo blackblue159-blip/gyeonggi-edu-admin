@@ -23,7 +23,9 @@ function isWarningLine(text) {
   return String(text ?? "").trimStart().startsWith("⚠️");
 }
 
-function TaskGroupBlocks({ groups, groupKeyPrefix }) {
+function TaskGroupBlocks({ groups, groupKeyPrefix, childrenLayout = "stack" }) {
+  const isCheckGrid = childrenLayout === "checkGrid";
+
   return (
     <div>
       {groups.map((group, gIdx) => (
@@ -65,27 +67,73 @@ function TaskGroupBlocks({ groups, groupKeyPrefix }) {
             </span>
           </div>
           {Array.isArray(group.children) && group.children.length > 0 ? (
-            <div
-              style={{
-                marginLeft: 4,
-                paddingLeft: 12,
-                borderLeft: CHILD_BORDER,
-              }}
-            >
-              {group.children.map((child, cIdx) => (
-                <p
-                  key={cIdx}
-                  style={{
-                    margin: cIdx > 0 ? "6px 0 0" : 0,
-                    fontSize: 11,
-                    lineHeight: 1.55,
-                    color: isWarningLine(child) ? WARNING_COLOR : TEXT_SECONDARY,
-                  }}
-                >
-                  {child}
-                </p>
-              ))}
-            </div>
+            isCheckGrid ? (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))",
+                  columnGap: 14,
+                  rowGap: 6,
+                }}
+              >
+                {group.children.map((child, cIdx) => (
+                  <div
+                    key={cIdx}
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 6,
+                      minWidth: 0,
+                    }}
+                  >
+                    <span
+                      aria-hidden
+                      style={{
+                        flexShrink: 0,
+                        marginTop: 4,
+                        width: 5,
+                        height: 5,
+                        borderRadius: 2,
+                        background: isWarningLine(child) ? WARNING_COLOR : DOT_GREEN,
+                        opacity: isWarningLine(child) ? 0.85 : 0.55,
+                      }}
+                    />
+                    <span
+                      style={{
+                        margin: 0,
+                        fontSize: 11,
+                        lineHeight: 1.45,
+                        color: isWarningLine(child) ? WARNING_COLOR : TEXT_SECONDARY,
+                      }}
+                    >
+                      {child}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div
+                style={{
+                  marginLeft: 4,
+                  paddingLeft: 12,
+                  borderLeft: CHILD_BORDER,
+                }}
+              >
+                {group.children.map((child, cIdx) => (
+                  <p
+                    key={cIdx}
+                    style={{
+                      margin: cIdx > 0 ? "6px 0 0" : 0,
+                      fontSize: 11,
+                      lineHeight: 1.55,
+                      color: isWarningLine(child) ? WARNING_COLOR : TEXT_SECONDARY,
+                    }}
+                  >
+                    {child}
+                  </p>
+                ))}
+              </div>
+            )
           ) : null}
         </div>
       ))}
@@ -276,11 +324,11 @@ export default function TaskGuide() {
           aria-label="상시·수시 업무"
           style={{
             marginBottom: 20,
-            padding: "12px 16px",
+            padding: "10px 12px",
             boxSizing: "border-box",
-            background: "var(--color-background-secondary)",
-            border: "0.5px solid var(--color-border-tertiary)",
-            borderRadius: "var(--border-radius-lg)",
+            background: "#fff",
+            border: BORDER_DEFAULT,
+            borderRadius: 8,
           }}
         >
           <div
@@ -289,7 +337,9 @@ export default function TaskGuide() {
               alignItems: "center",
               justifyContent: "space-between",
               gap: 12,
-              marginBottom: monthlyPanelOpen ? 12 : 0,
+              paddingBottom: 10,
+              borderBottom: "1px solid #ececea",
+              marginBottom: monthlyPanelOpen ? 10 : 0,
             }}
           >
             <span
@@ -324,7 +374,11 @@ export default function TaskGuide() {
             </button>
           </div>
           {monthlyPanelOpen ? (
-            <TaskGroupBlocks groups={selectedTask.monthly} groupKeyPrefix="monthly" />
+            <TaskGroupBlocks
+              groups={selectedTask.monthly}
+              groupKeyPrefix="monthly"
+              childrenLayout="checkGrid"
+            />
           ) : null}
         </section>
       ) : null}
