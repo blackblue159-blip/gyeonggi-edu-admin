@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ALL_TASKS } from "../data/tasks/index.js";
 
-const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
-
 const TEXT_PRIMARY = "#37352f";
 const TEXT_SECONDARY = "#787774";
 const TEXT_MUTED = "#9b9a97";
@@ -156,6 +154,18 @@ export default function TaskGuide() {
   }, [selectedTask?.id]);
 
   const currentMonth = currentMonthNumber();
+  const monthsToRender = useMemo(() => {
+    const months = selectedTask?.months;
+    if (!months || typeof months !== "object") return [];
+
+    return Object.entries(months)
+      .map(([key, value]) => ({
+        month: Number(key),
+        items: Array.isArray(value) ? value : [],
+      }))
+      .filter(({ month, items }) => Number.isFinite(month) && items.length > 0)
+      .sort((a, b) => a.month - b.month);
+  }, [selectedTask]);
 
   if (!selectedTask || ALL_TASKS.length === 0) {
     return (
@@ -390,8 +400,13 @@ export default function TaskGuide() {
           gap: 14,
         }}
       >
-        {MONTHS.map((month) => {
-          const items = selectedTask.months[String(month)] ?? [];
+        {monthsToRender.length === 0 ? (
+          <p style={{ margin: 0, fontSize: 12, color: TEXT_MUTED, lineHeight: 1.5 }}>
+            등록된 업무가 없습니다
+          </p>
+        ) : null}
+
+        {monthsToRender.map(({ month, items }) => {
           const isThisMonth = month === currentMonth;
 
           return (
@@ -435,14 +450,7 @@ export default function TaskGuide() {
                   </span>
                 ) : null}
               </div>
-
-              {items.length === 0 ? (
-                <p style={{ margin: 0, fontSize: 12, color: TEXT_MUTED, lineHeight: 1.5 }}>
-                  등록된 업무가 없습니다
-                </p>
-              ) : (
-                <TaskGroupBlocks groups={items} groupKeyPrefix={`m-${month}`} />
-              )}
+              <TaskGroupBlocks groups={items} groupKeyPrefix={`m-${month}`} />
             </section>
           );
         })}
