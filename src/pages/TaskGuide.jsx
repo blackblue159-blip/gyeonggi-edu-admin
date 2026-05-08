@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { ALL_TASKS } from "../data/tasks/index.js";
 
+const ALL_MONTH_NUMBERS = Array.from({ length: 12 }, (_, i) => i + 1);
+
 const TEXT_PRIMARY = "#37352f";
 const TEXT_SECONDARY = "#787774";
 const TEXT_MUTED = "#9b9a97";
@@ -156,7 +158,18 @@ export default function TaskGuide() {
   const currentMonth = currentMonthNumber();
   const monthsToRender = useMemo(() => {
     const months = selectedTask?.months;
-    if (!months || typeof months !== "object") return [];
+    if (!months || typeof months !== "object") {
+      return selectedTask?.id === "세입"
+        ? ALL_MONTH_NUMBERS.map((month) => ({ month, items: [] }))
+        : [];
+    }
+
+    if (selectedTask.id === "세입") {
+      return ALL_MONTH_NUMBERS.map((month) => ({
+        month,
+        items: Array.isArray(months[String(month)]) ? months[String(month)] : [],
+      }));
+    }
 
     return Object.entries(months)
       .map(([key, value]) => ({
@@ -450,7 +463,13 @@ export default function TaskGuide() {
                   </span>
                 ) : null}
               </div>
-              <TaskGroupBlocks groups={items} groupKeyPrefix={`m-${month}`} />
+              {items.length === 0 ? (
+                <p style={{ margin: 0, fontSize: 12, color: TEXT_MUTED, lineHeight: 1.5 }}>
+                  등록된 업무가 없습니다
+                </p>
+              ) : (
+                <TaskGroupBlocks groups={items} groupKeyPrefix={`m-${month}`} />
+              )}
             </section>
           );
         })}
