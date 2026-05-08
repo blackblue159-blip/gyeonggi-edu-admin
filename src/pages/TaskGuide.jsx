@@ -159,7 +159,9 @@ export default function TaskGuide() {
   const monthsToRender = useMemo(() => {
     const months = selectedTask?.months;
     const alwaysShowAllMonths =
-      selectedTask?.id === "세입" || selectedTask?.id === "지출";
+      selectedTask?.id === "세입" ||
+      selectedTask?.id === "지출" ||
+      selectedTask?.id === "급여";
 
     if (!months || typeof months !== "object") {
       return alwaysShowAllMonths
