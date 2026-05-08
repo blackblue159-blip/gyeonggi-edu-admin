@@ -158,13 +158,16 @@ export default function TaskGuide() {
   const currentMonth = currentMonthNumber();
   const monthsToRender = useMemo(() => {
     const months = selectedTask?.months;
+    const alwaysShowAllMonths =
+      selectedTask?.id === "세입" || selectedTask?.id === "지출";
+
     if (!months || typeof months !== "object") {
-      return selectedTask?.id === "세입"
+      return alwaysShowAllMonths
         ? ALL_MONTH_NUMBERS.map((month) => ({ month, items: [] }))
         : [];
     }
 
-    if (selectedTask.id === "세입") {
+    if (alwaysShowAllMonths) {
       return ALL_MONTH_NUMBERS.map((month) => ({
         month,
         items: Array.isArray(months[String(month)]) ? months[String(month)] : [],
