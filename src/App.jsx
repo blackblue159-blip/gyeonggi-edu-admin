@@ -16,6 +16,7 @@ const SchoolInfo = lazy(() => import("./pages/SchoolInfo.jsx"));
 const Calculator = lazy(() => import("./pages/Calculator.jsx"));
 const Inventory = lazy(() => import("./pages/Inventory.jsx"));
 const Archive = lazy(() => import("./pages/Archive.jsx"));
+const PrintForms = lazy(() => import("./pages/PrintForms.tsx"));
 const Tools = lazy(() => import("./pages/Tools.jsx"));
 const TaskGuide = lazy(() => import("./pages/TaskGuide.jsx"));
 const Calendar = lazy(() => import("./pages/Calendar.jsx"));
@@ -24,6 +25,7 @@ export default function App() {
   return (
     <Suspense fallback={<LoadingUI />}>
       <Routes>
+        <Route path="/print-forms" element={<PrintForms />} />
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/calculator" element={<Calculator />} />

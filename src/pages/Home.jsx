@@ -304,10 +304,10 @@ export default function Home() {
             accent="teal"
           />
           <ToolCard
-            icon="🗂"
-            title="편철 표지"
-            description="한 줄에 하나씩 입력하고, 10행 구조 편철 옆면 표지를 미리보기·인쇄합니다. 데이터는 이 기기의 localStorage에만 저장됩니다."
-            to="/archive"
+            icon="🖨"
+            title="출력물 서식 편집기"
+            description="지출증빙서 측면 라벨, 파일철 편철 서식, 급여대장 표지를 미리보기에서 바로 편집하고 인쇄합니다."
+            to="/print-forms"
             cta="바로 가기"
             accent="amber"
           />
@@ -338,7 +338,7 @@ export default function Home() {
 
       <section className="rounded-lg border border-dashed border-[#E5E7EB] bg-white p-4 text-sm text-[#6B7280]">
         <p className="font-medium text-[#111827]">최근 업데이트</p>
-        <p className="mt-1">카드 고지서 매칭 웹앱 오픈</p>
+        <p className="mt-1">출력물 서식 편집기 시험판 추가</p>
       </section>
     </main>
   );

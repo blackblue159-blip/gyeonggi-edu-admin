@@ -141,11 +141,18 @@ export function Sidebar() {
                 <span>물품대장</span>
               </NavLink>
               <NavLink
+                to="/print-forms"
+                className={({ isActive }) => `${navLinkClass(isActive)} pl-5`}
+              >
+                <span aria-hidden>🖨</span>
+                <span>출력물 서식 편집기</span>
+              </NavLink>
+              <NavLink
                 to="/archive"
                 className={({ isActive }) => `${navLinkClass(isActive)} pl-5`}
               >
                 <span aria-hidden>🗂</span>
-                <span>편철 표지</span>
+                <span>기존 편철 표지</span>
               </NavLink>
             </div>
           ) : null}
