@@ -106,11 +106,11 @@ export function MobileHeader() {
             <span>물품대장</span>
           </NavLink>
           <NavLink
-            to="/archive"
+            to="/print-forms"
             className={({ isActive }) => mobileNavClass(isActive)}
           >
-            <span aria-hidden>🗂</span>
-            <span>편철 표지</span>
+            <span aria-hidden>🖨</span>
+            <span>출력물 서식 편집기</span>
           </NavLink>
 
           <SectionLabel>준비중</SectionLabel>

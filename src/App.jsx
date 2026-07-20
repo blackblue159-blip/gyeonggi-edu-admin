@@ -15,7 +15,6 @@ const CardMatch = lazy(() => import("./pages/CardMatch.jsx"));
 const SchoolInfo = lazy(() => import("./pages/SchoolInfo.jsx"));
 const Calculator = lazy(() => import("./pages/Calculator.jsx"));
 const Inventory = lazy(() => import("./pages/Inventory.jsx"));
-const Archive = lazy(() => import("./pages/Archive.jsx"));
 const PrintForms = lazy(() => import("./pages/PrintForms.tsx"));
 const Tools = lazy(() => import("./pages/Tools.jsx"));
 const TaskGuide = lazy(() => import("./pages/TaskGuide.jsx"));
@@ -30,7 +29,6 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/calculator" element={<Calculator />} />
           <Route path="/inventory" element={<Inventory />} />
-          <Route path="/archive" element={<Archive />} />
           <Route path="/tools" element={<Tools />} />
           <Route path="/school-info" element={<SchoolInfo />} />
           <Route path="/card-match" element={<CardMatch />} />
