@@ -11,11 +11,11 @@ const FONT = "맑은 고딕";
 
 /** @param {unknown} v */
 function excelDateValue(v) {
-  if (v instanceof Date && !Number.isNaN(v.getTime())) return v;
-  const d = parseEduDate(v);
-  if (d) return d;
-  const c = normalizeCardApprovalDate(v);
-  return c ?? v;
+  const d = v instanceof Date && !Number.isNaN(v.getTime()) ? v : parseEduDate(v);
+  const parsed = d ?? normalizeCardApprovalDate(v);
+  if (!parsed) return v;
+
+  return Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()) / 86400000 + 25569;
 }
 
 /**
@@ -91,7 +91,7 @@ export async function buildCardMatchWorkbook(payload) {
       } else {
         cell.alignment = { vertical: "top", horizontal: "left", wrapText: true };
       }
-      if (col === 1 && cell.value instanceof Date) cell.numFmt = "yyyy-mm-dd";
+      if (col === 1 && typeof cell.value === "number") cell.numFmt = "yyyy-mm-dd";
       cell.border = {
         top: { style: "thin" },
         left: { style: "thin" },
@@ -214,7 +214,7 @@ export async function buildCardMatchWorkbook(payload) {
     row.getCell(1).alignment = { horizontal: "center", vertical: "middle", wrapText: true };
     row.getCell(2).alignment = { horizontal: "left", vertical: "top", wrapText: true };
     row.getCell(3).alignment = { horizontal: "right", vertical: "middle", wrapText: true };
-    if (row.getCell(1).value instanceof Date) row.getCell(1).numFmt = "yyyy-mm-dd";
+    if (typeof row.getCell(1).value === "number") row.getCell(1).numFmt = "yyyy-mm-dd";
     row.getCell(3).numFmt = "#,##0";
     row.eachCell((cell) => {
       cell.font = { name: FONT, size: 10 };

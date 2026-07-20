@@ -170,7 +170,37 @@ function cardDetailSplit(subSorted, merchant, total) {
     return `${ds} ${r.금액.toLocaleString("ko-KR")}원`;
   });
   const n = subSorted.length;
-  return `${parts.join(" + ")} / ${merchant} / 합계 ${total.toLocaleString("ko-KR")}원 (분할 ${n}건)`;
+  const hasAdjustment = subSorted.some((row) => row.금액 < 0);
+  const totalLabel = hasAdjustment ? "순액" : "합계";
+  const matchLabel = hasAdjustment ? `환불·조정 포함 ${n}건` : `분할 ${n}건`;
+  return `${parts.join(" + ")} / ${merchant} / ${totalLabel} ${total.toLocaleString("ko-KR")}원 (${matchLabel})`;
+}
+
+/**
+ * 음수가 포함된 합산은 동일 거래의 환불·금액 조정으로 볼 근거가 있을 때만 허용한다.
+ * @param {import('./matchEngine.js').CardWorkRow[]} rows
+ */
+function isSafeNetAdjustmentCombo(rows) {
+  const amounts = rows.map((row) => row.금액);
+  if (!amounts.some((amount) => amount < 0)) return true;
+  if (!amounts.some((amount) => amount > 0)) return false;
+
+  if (new Set(rows.map((row) => dateKey(row.승인일자))).size !== 1) return false;
+
+  const merchants = new Set(
+    rows.map((row) => String(row.merchant ?? "").replace(/\s+/g, "").toLocaleLowerCase("ko-KR"))
+  );
+  if (merchants.has("") || merchants.size !== 1) return false;
+
+  const cardNumbers = rows.map((row) => String(row.raw?.카드번호 ?? "").trim());
+  const providedCardNumbers = cardNumbers.filter(Boolean);
+  if (
+    providedCardNumbers.length > 0 &&
+    (providedCardNumbers.length !== cardNumbers.length || new Set(providedCardNumbers).size !== 1)
+  ) {
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -233,7 +263,14 @@ function findSameDaySumMatch(winRows, targetAmt, eDate) {
   }
   const candidates = [];
   for (const [, g] of byDay) {
-    if (g.sum === targetAmt && g.count >= 2) candidates.push(g);
+    const rows = g.idxs.map((idx) => winRows.find((row) => row.idx === idx)).filter(Boolean);
+    if (
+      g.sum === targetAmt &&
+      g.count >= 2 &&
+      isSafeNetAdjustmentCombo(rows)
+    ) {
+      candidates.push(g);
+    }
   }
   if (candidates.length === 0) return null;
   const e0 = stripTime(eDate);
@@ -278,6 +315,8 @@ function findSplitMatch(winRows, targetAmt, eDate, cardByIdx) {
       const idx_j = items[pos_j][0];
       if (idx_i === idx_j) continue;
       const aj = items[pos_j][1];
+      const pairRows = [cardByIdx.get(idx_i), cardByIdx.get(idx_j)].filter(Boolean);
+      if (!isSafeNetAdjustmentCombo(pairRows)) continue;
       const hi = ai >= aj ? ai : aj;
       const lo = ai >= aj ? aj : ai;
       const [ds, dm] = splitComboDateKey(cardByIdx, [idx_i, idx_j], eDate);
@@ -323,6 +362,10 @@ function findSplitMatch(winRows, targetAmt, eDate, cardByIdx) {
         const idx_j = items[pos_j][0];
         const idx_k = items[pos_k][0];
         if (new Set([idx_i, idx_j, idx_k]).size < 3) continue;
+        const tripleRows = [cardByIdx.get(idx_i), cardByIdx.get(idx_j), cardByIdx.get(idx_k)].filter(
+          Boolean
+        );
+        if (!isSafeNetAdjustmentCombo(tripleRows)) continue;
         const a2 = items[pos_j][1];
         const a3 = need;
         const amts = [ai, a2, a3].sort((x, y) => y - x);

@@ -335,6 +335,7 @@ function UsageGuideModal({ open, onClose }) {
               <ul className="mt-2 list-inside list-disc space-y-1.5 text-[#5c5b57] marker:text-[#c7c7c5]">
                 <li>BC카드 홈페이지 → 카드이용 조회</li>
                 <li>청구명세서조회 → 날짜 선택 후 엑셀 다운로드</li>
+                <li>삼성카드 → 매출건별 상세내역 엑셀 다운로드</li>
               </ul>
               <GuideImageThumb
                 src={GUIDE_IMG_CARD}
@@ -345,7 +346,7 @@ function UsageGuideModal({ open, onClose }) {
             </section>
 
             <div className="space-y-2 rounded-md border border-[#e9e9e7] bg-[#fbfbfa] px-3 py-3 text-[12px] text-[#5c5b57]">
-              <p>※ 고지서나 원인행위목록 서식 변경하면 작동 안 함</p>
+              <p>※ BC·삼성카드에서 내려받은 원본 파일을 사용해 주세요.</p>
               <p>※ 결과는 반드시 교차검증 필수</p>
             </div>
           </div>
@@ -378,8 +379,8 @@ export default function CardMatch() {
     setBusy(true);
     try {
       const [eduRows, cardRows] = await Promise.all([
-        parseDataFileToRows(eduFile),
-        parseDataFileToRows(cardFile),
+        parseDataFileToRows(eduFile, "edu"),
+        parseDataFileToRows(cardFile, "card"),
       ]);
       const result = runAnalysisFromRows(eduRows, cardRows);
       const buf = await buildCardMatchWorkbook(result);
@@ -419,9 +420,9 @@ export default function CardMatch() {
       </p>
 
       <ul className="mt-4 list-inside list-disc text-xs text-[#9b9a97]">
-        <li>원인행위: 열 이름에 일자, 제목, 원인행위금액(및 번호·품명 등)이 있어야 합니다.</li>
-        <li>카드: 승인일자, 이용금액, 가맹점명/국가명 열이 필요합니다.</li>
-        <li>지원 형식: CSV, .xlsx, .xlsm, .xls (첫 번째 시트를 읽습니다)</li>
+        <li>원인행위와 카드 내역의 열 제목 및 시트를 자동으로 찾습니다.</li>
+        <li>카드: BC카드 청구명세서와 삼성카드 매출건별 상세내역을 지원합니다.</li>
+        <li>지원 형식: CSV, .xlsx, .xlsm, .xls</li>
       </ul>
 
       <div className="mt-8 grid gap-5 sm:grid-cols-2">
@@ -439,7 +440,7 @@ export default function CardMatch() {
         <FileDropZone
           label="2. 카드 고지서(청구내역)"
           sub="카드사 고지서 Excel 또는 CSV"
-          hint="BC카드 청구명세서 엑셀"
+          hint="BC·삼성카드 엑셀"
           file={cardFile}
           onFile={setCardFile}
           onInvalidFile={setError}
