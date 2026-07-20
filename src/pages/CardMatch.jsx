@@ -12,6 +12,7 @@ const ALLOWED_EXT = new Set([".csv", ".xlsx", ".xls", ".xlsm"]);
 /** `public/images/` 안의 파일명과 문자 단위로 동일해야 합니다. */
 const GUIDE_IMG_FILE_EDU = "원인행위목록_다운방법.png";
 const GUIDE_IMG_FILE_CARD = "고지서_다운방법.png";
+const GUIDE_IMG_FILE_RESULT = "card-match-result-example.jpg";
 
 /** @param {string} filename public/images/ 기준 파일명(한글 포함) */
 function publicImageUrl(filename) {
@@ -20,6 +21,7 @@ function publicImageUrl(filename) {
 
 const GUIDE_IMG_EDU = publicImageUrl(GUIDE_IMG_FILE_EDU);
 const GUIDE_IMG_CARD = publicImageUrl(GUIDE_IMG_FILE_CARD);
+const GUIDE_IMG_RESULT = publicImageUrl(GUIDE_IMG_FILE_RESULT);
 
 /**
  * @param {{ open: boolean, src: string | null, alt: string, onClose: () => void }} props
@@ -65,9 +67,9 @@ function ImageLightbox({ open, src, alt, onClose }) {
 }
 
 /**
- * @param {{ src: string, alt: string, fileLabel: string, onOpen: (p: { src: string, alt: string }) => void }} props
+ * @param {{ src: string, alt: string, fileLabel: string, contain?: boolean, onOpen: (p: { src: string, alt: string }) => void }} props
  */
-function GuideImageThumb({ src, alt, fileLabel, onOpen }) {
+function GuideImageThumb({ src, alt, fileLabel, contain = false, onOpen }) {
   const [broken, setBroken] = useState(false);
 
   return (
@@ -80,7 +82,12 @@ function GuideImageThumb({ src, alt, fileLabel, onOpen }) {
         if (!broken) onOpen({ src, alt });
       }}
     >
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-[#f7f6f3] sm:aspect-[5/3]">
+      <div
+        className={[
+          "relative w-full overflow-hidden bg-[#f7f6f3]",
+          contain ? "aspect-[4/3]" : "aspect-[16/10] sm:aspect-[5/3]",
+        ].join(" ")}
+      >
         {broken ? (
           <div className="flex h-full min-h-[140px] flex-col items-center justify-center gap-1 px-4 text-center">
             <p className="text-[12px] font-medium text-[#787774]">이미지를 불러올 수 없습니다</p>
@@ -98,7 +105,10 @@ function GuideImageThumb({ src, alt, fileLabel, onOpen }) {
             alt=""
             decoding="async"
             loading="lazy"
-            className="h-full w-full object-cover object-top transition duration-200 group-hover:scale-[1.015]"
+            className={[
+              "h-full w-full object-top transition duration-200 group-hover:scale-[1.015]",
+              contain ? "object-contain" : "object-cover",
+            ].join(" ")}
             onError={() => setBroken(true)}
           />
         )}
@@ -341,6 +351,21 @@ function UsageGuideModal({ open, onClose }) {
                 src={GUIDE_IMG_CARD}
                 alt="BC카드 청구명세서 엑셀 다운로드 안내 이미지"
                 fileLabel={GUIDE_IMG_FILE_CARD}
+                onOpen={setPreview}
+              />
+            </section>
+
+            <section>
+              <h3 className="text-[13px] font-semibold text-[#37352f]">[결과물 예시]</h3>
+              <ul className="mt-2 list-inside list-disc space-y-1.5 text-[#5c5b57] marker:text-[#c7c7c5]">
+                <li>대조상태 열에서 매칭완료·합산일치·확인필요 항목을 확인합니다.</li>
+                <li>오른쪽 카드 대금 검증에서 찾아야 할 돈이 0원인지 확인합니다.</li>
+              </ul>
+              <GuideImageThumb
+                src={GUIDE_IMG_RESULT}
+                alt="카드 고지서 매칭 결과 엑셀 예시"
+                fileLabel={GUIDE_IMG_FILE_RESULT}
+                contain
                 onOpen={setPreview}
               />
             </section>
