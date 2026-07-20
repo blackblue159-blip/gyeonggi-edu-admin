@@ -13,6 +13,7 @@ import {
   createResizeSnapTargets,
   resolveResizeSnap,
 } from "../lib/printForms/resize-snap.js";
+import { formatMillimetersAsCentimeters } from "../lib/printForms/measurements.js";
 import {
   repairKnownReversedText,
   repairReversedText,
@@ -2592,29 +2593,29 @@ function LedgerCoverControls({
               <div>
                 <dt>외곽 틀</dt>
                 <dd>
-                  {defaultLedgerCoverSettings.frameWidthMm} ×{" "}
-                  {defaultLedgerCoverSettings.frameHeightMm}mm
+                  {formatMillimetersAsCentimeters(defaultLedgerCoverSettings.frameWidthMm)} ×{" "}
+                  {formatMillimetersAsCentimeters(defaultLedgerCoverSettings.frameHeightMm)}cm
                 </dd>
               </div>
               <div>
                 <dt>상단</dt>
                 <dd>
-                  {defaultLedgerCoverSettings.infoWidthMm} ×{" "}
-                  {defaultLedgerCoverSettings.infoHeightMm}mm
+                  {formatMillimetersAsCentimeters(defaultLedgerCoverSettings.infoWidthMm)} ×{" "}
+                  {formatMillimetersAsCentimeters(defaultLedgerCoverSettings.infoHeightMm)}cm
                 </dd>
               </div>
               <div>
                 <dt>제목</dt>
                 <dd>
-                  {defaultLedgerCoverSettings.titleWidthMm} ×{" "}
-                  {defaultLedgerCoverSettings.titleHeightMm}mm
+                  {formatMillimetersAsCentimeters(defaultLedgerCoverSettings.titleWidthMm)} ×{" "}
+                  {formatMillimetersAsCentimeters(defaultLedgerCoverSettings.titleHeightMm)}cm
                 </dd>
               </div>
               <div className="default-widths">
                 <dt>하단</dt>
                 <dd>
-                  {defaultLedgerCoverSettings.footerWidthMm} ×{" "}
-                  {defaultLedgerCoverSettings.footerHeightMm}mm
+                  {formatMillimetersAsCentimeters(defaultLedgerCoverSettings.footerWidthMm)} ×{" "}
+                  {formatMillimetersAsCentimeters(defaultLedgerCoverSettings.footerHeightMm)}cm
                 </dd>
               </div>
             </dl>
@@ -2666,6 +2667,7 @@ function LedgerCoverControls({
                 ariaLabel="표지 외곽 틀 너비"
                 group="ledger-frame-width"
                 label="외곽 너비"
+                displayDivisor={10}
                 max={200}
                 min={150}
                 onCommit={(frameWidthMm, group) =>
@@ -2673,13 +2675,14 @@ function LedgerCoverControls({
                 }
                 onEndGroup={endHistoryGroup}
                 step={0.5}
-                unit="mm"
+                unit="cm"
                 value={settings.frameWidthMm}
               />
               <RangeNumberControl
                 ariaLabel="표지 외곽 틀 높이"
                 group="ledger-frame-height"
                 label="외곽 높이"
+                displayDivisor={10}
                 max={245}
                 min={180}
                 onCommit={(frameHeightMm, group) =>
@@ -2687,13 +2690,14 @@ function LedgerCoverControls({
                 }
                 onEndGroup={endHistoryGroup}
                 step={0.5}
-                unit="mm"
+                unit="cm"
                 value={settings.frameHeightMm}
               />
               <RangeNumberControl
                 ariaLabel="표지 상단 정보 너비"
                 group="ledger-info-width"
                 label="상단 너비"
+                displayDivisor={10}
                 max={150}
                 min={55}
                 onCommit={(infoWidthMm, group) =>
@@ -2701,13 +2705,14 @@ function LedgerCoverControls({
                 }
                 onEndGroup={endHistoryGroup}
                 step={0.5}
-                unit="mm"
+                unit="cm"
                 value={settings.infoWidthMm}
               />
               <RangeNumberControl
                 ariaLabel="표지 상단 정보 높이"
                 group="ledger-info-height"
                 label="상단 높이"
+                displayDivisor={10}
                 max={40}
                 min={14}
                 onCommit={(infoHeightMm, group) =>
@@ -2715,13 +2720,14 @@ function LedgerCoverControls({
                 }
                 onEndGroup={endHistoryGroup}
                 step={0.5}
-                unit="mm"
+                unit="cm"
                 value={settings.infoHeightMm}
               />
               <RangeNumberControl
                 ariaLabel="표지 제목 영역 너비"
                 group="ledger-title-width"
                 label="제목 너비"
+                displayDivisor={10}
                 max={185}
                 min={80}
                 onCommit={(titleWidthMm, group) =>
@@ -2729,13 +2735,14 @@ function LedgerCoverControls({
                 }
                 onEndGroup={endHistoryGroup}
                 step={0.5}
-                unit="mm"
+                unit="cm"
                 value={settings.titleWidthMm}
               />
               <RangeNumberControl
                 ariaLabel="표지 제목 영역 높이"
                 group="ledger-title-height"
                 label="제목 높이"
+                displayDivisor={10}
                 max={70}
                 min={20}
                 onCommit={(titleHeightMm, group) =>
@@ -2743,13 +2750,14 @@ function LedgerCoverControls({
                 }
                 onEndGroup={endHistoryGroup}
                 step={0.5}
-                unit="mm"
+                unit="cm"
                 value={settings.titleHeightMm}
               />
               <RangeNumberControl
                 ariaLabel="표지 하단 정보 너비"
                 group="ledger-footer-width"
                 label="하단 너비"
+                displayDivisor={10}
                 max={160}
                 min={60}
                 onCommit={(footerWidthMm, group) =>
@@ -2757,13 +2765,14 @@ function LedgerCoverControls({
                 }
                 onEndGroup={endHistoryGroup}
                 step={0.5}
-                unit="mm"
+                unit="cm"
                 value={settings.footerWidthMm}
               />
               <RangeNumberControl
                 ariaLabel="표지 하단 정보 높이"
                 group="ledger-footer-height"
                 label="하단 높이"
+                displayDivisor={10}
                 max={45}
                 min={16}
                 onCommit={(footerHeightMm, group) =>
@@ -2771,7 +2780,7 @@ function LedgerCoverControls({
                 }
                 onEndGroup={endHistoryGroup}
                 step={0.5}
-                unit="mm"
+                unit="cm"
                 value={settings.footerHeightMm}
               />
             </div>
@@ -2779,8 +2788,8 @@ function LedgerCoverControls({
         ) : (
           <p className="collapsed-size-summary" aria-label="현재 표지 크기 요약">
             제목 {formatMeasurement(settings.titleFontSizePt)}pt · 외곽{" "}
-            {formatMeasurement(settings.frameWidthMm)} ×{" "}
-            {formatMeasurement(settings.frameHeightMm)}mm
+            {formatMillimetersAsCentimeters(settings.frameWidthMm)} ×{" "}
+            {formatMillimetersAsCentimeters(settings.frameHeightMm)}cm
           </p>
         )}
       </section>
@@ -2876,6 +2885,7 @@ function FileFolderControls({
 
 function RangeNumberControl({
   ariaLabel,
+  displayDivisor = 1,
   group,
   label,
   max,
@@ -2887,6 +2897,7 @@ function RangeNumberControl({
   value,
 }: {
   ariaLabel: string;
+  displayDivisor?: number;
   group: string;
   label: string;
   max: number;
@@ -2915,6 +2926,7 @@ function RangeNumberControl({
       />
       <NumberInput
         ariaLabel={ariaLabel}
+        displayDivisor={displayDivisor}
         max={max}
         min={min}
         onCommit={(nextValue) => onCommit(nextValue)}
@@ -3104,10 +3116,7 @@ function SideLabel({
           className={`resize-value-badge resize-value-badge-${resizeFeedback.kind}`}
           data-snapped={resizeFeedback.snapped || undefined}
         >
-          {Number.isInteger(resizeFeedback.value)
-            ? resizeFeedback.value
-            : resizeFeedback.value.toFixed(1)}
-          mm
+          {formatMillimetersAsCentimeters(resizeFeedback.value)}cm
         </output>
       ) : null}
 
@@ -3413,7 +3422,7 @@ function FileFolderSideLabel({
           className={`resize-value-badge resize-value-badge-${feedbackPlacement}`}
           data-snapped={resizeFeedback.snapped || undefined}
         >
-          {formatMeasurement(resizeFeedback.value)}mm
+          {formatMillimetersAsCentimeters(resizeFeedback.value)}cm
         </output>
       ) : null}
 
@@ -3693,7 +3702,7 @@ function LedgerResizeHandles({
           className={`resize-value-badge resize-value-badge-${placement}`}
           data-snapped={relevantFeedback.snapped || undefined}
         >
-          {formatMeasurement(relevantFeedback.value)}mm
+          {formatMillimetersAsCentimeters(relevantFeedback.value)}cm
         </output>
       ) : null}
       <button
@@ -3927,7 +3936,7 @@ function CoverBox({
           className={`resize-value-badge resize-value-badge-${placement}`}
           data-snapped={relevantFeedback.snapped || undefined}
         >
-          {formatMeasurement(relevantFeedback.value)}mm
+          {formatMillimetersAsCentimeters(relevantFeedback.value)}cm
         </output>
       ) : null}
       <button
@@ -4451,6 +4460,7 @@ function WrappedTextEditor({
 
 function NumberInput({
   ariaLabel,
+  displayDivisor = 1,
   max,
   min,
   onCommit,
@@ -4459,6 +4469,7 @@ function NumberInput({
   value,
 }: {
   ariaLabel: string;
+  displayDivisor?: number;
   max: number;
   min: number;
   onCommit: (value: number) => void;
@@ -4466,18 +4477,28 @@ function NumberInput({
   unit: string;
   value: number;
 }) {
-  const formattedValue = Number.isInteger(value) ? String(value) : value.toFixed(1);
+  const displayValue = value / displayDivisor;
+  const displayMin = min / displayDivisor;
+  const displayMax = max / displayDivisor;
+  const displayStep = step / displayDivisor;
+  const formattedValue = Number.isInteger(displayValue)
+    ? String(displayValue)
+    : String(Number(displayValue.toFixed(2)));
 
   function commit(input: HTMLInputElement) {
-    const parsed = Number(input.value);
-    if (!Number.isFinite(parsed)) {
+    const parsedDisplayValue = Number(input.value);
+    if (!Number.isFinite(parsedDisplayValue)) {
       input.value = formattedValue;
       return;
     }
 
+    const parsed = parsedDisplayValue * displayDivisor;
     const stepped = Math.round(parsed / step) * step;
     const nextValue = clampNumber(Number(stepped.toFixed(2)), min, max);
-    input.value = Number.isInteger(nextValue) ? String(nextValue) : nextValue.toFixed(1);
+    const nextDisplayValue = nextValue / displayDivisor;
+    input.value = Number.isInteger(nextDisplayValue)
+      ? String(nextDisplayValue)
+      : String(Number(nextDisplayValue.toFixed(2)));
     onCommit(nextValue);
   }
 
@@ -4487,8 +4508,8 @@ function NumberInput({
         aria-label={ariaLabel}
         defaultValue={formattedValue}
         key={formattedValue}
-        max={max}
-        min={min}
+        max={displayMax}
+        min={displayMin}
         onBlur={(event) => commit(event.currentTarget)}
         onKeyDown={(event) => {
           if (event.key === "Enter") {
@@ -4501,7 +4522,7 @@ function NumberInput({
             event.currentTarget.blur();
           }
         }}
-        step={step}
+        step={displayStep}
         type="number"
       />
       <span aria-hidden="true">{unit}</span>
